@@ -23,7 +23,11 @@ $(BIN):$(SRC)
 		$(SRC)\
 		$(LDFLAGS)\
 		-o $(BIN)
-.phony:clean
+.phony:\
+	run\
+	clean
+run:
+	$(BIN)
 clean:
 	rm $(BIN)</code></pre>
 <p>Alternatively you can simply copy sources and headers from <code>SQLiteCpp/src</code> and <code>SQLiteCpp/include</code> to your project source tree and compile it in. Here is a simple application</p>
@@ -240,6 +244,29 @@ int main(int argc,char** argv){
   }
   return 0;
 }</code></pre>
+<p>Sample output is as follows</p>
+<pre><code class="language-javascript">Opened ./db/a.db
+Creating table...Creating A0...done
+Creating B0...done
+UPDATING A0...done
+UPDATING B0...done
+Creating A1...done
+Creating B1...done
+UPDATING A1...done
+UPDATING B1...done
+(0,A0,0,)
+        (0,B0,0,)
+----------------------------------------
+(1,A1,1,)
+        (1,B1,1,)
+----------------------------------------
+(0,B0,0,)
+        (0,A0,0,)
+----------------------------------------
+(1,B1,1,)
+        (1,A1,1,)
+----------------------------------------
+done.</code></pre>
 <script>
 	Prism.highlightAll()
 </script>
