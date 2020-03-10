@@ -1,0 +1,269 @@
+<p>Let's take a look at setting up, populating, manipulating, and retrieving associations in <code>PostgreSQL</code>.</p>
+<h3>One-to-One</h3>
+<p>We'll start with the <i>one-to-one</i> association, where an instance in one table refers to an instance in another table and <i>vice versa</i>.</p>
+<pre><code class="language-javascript">DO $$
+DECLARE
+    idx     integer:=0;
+    ncls    integer:=8;
+    _cls0_id integer;
+BEGIN
+    drop table if exists cls0 cascade;
+    drop table if exists cls1 cascade;
+    create table cls0(
+        cls0_id serial primary key not null,
+        value int
+    );
+    create table cls1(
+        cls1_id serial primary key not null,
+        cls0_id int unique references cls0(cls0_id),
+        value int
+    );
+    LOOP
+        EXIT WHEN idx=ncls;
+        insert into cls0(
+            value
+        )values(
+            idx*10
+        ) returning cls0_id into _cls0_id;
+        insert into cls1(
+            value,
+            cls0_id
+        )values(
+            idx*100,
+            _cls0_id
+        );
+        idx=idx+1;
+    END LOOP;
+END $$;
+select
+    cls0.cls0_id,
+    cls0.value,
+    cls1.value
+from
+    cls0
+inner join
+    cls1 on
+    cls0.cls0_id=cls1.cls0_id
+;</code></pre>
+<p>This example is done in a single unnamed code block where we set up the tables, populate them, and perform a query. We have two tables, <code>cls0</code> and <code>cls1</code>, and the first thing we do is drop them just to clear things out for the example.</p>
+<p><code>cls0</code> is set up with a <code>primary key</code> of type <code>serial</code>. The second table, <code>cls1</code> is set up with a <code>primary key</code> of its own as well as a <i>foreign</i> key that references the <code>primary key</code> of <code>cls0</code>. It has a <code>unique</code> constraint ensuring that multiple instances of <code>cls1</code> cannot refer to the same instance of <code>cls0</code> via the <i>foreign key</i>.</p>
+<p>After creating the tables we enter a loop creating instances of <code>cls0</code> and <code>cls1</code>. In order to create and associate an instance of <code>cls1</code> with the <code>cls0</code> instance, we need a handle on the <code>primary key</code> value, and we do so by performing the <code>insert</code> statement and returning the automatically generated serial value into a variable. Now that we have the serial value, we can create an instance of <code>cls1</code> and set its <i>foreign key</i> value to the stored serial in order to fill the association.</p>
+<p>After our test data has been created we perform a <code>select</code> statement using a <code>inner join</code>. An <code>inner join</code> is used because it selects all rows from both tables as long as there is a match between columns, so if either side has a mismatch, such a result will not be returned.</p>
+<p>Sample output</p>
+<pre><code class="language-javascript">cls0_id,,value
+--------------
+1,0,0
+2,10,100
+3,20,200
+4,30,300
+5,40,400
+6,50,500
+7,60,600
+8,70,700</code></pre>
+<h3>One-to-Many</h3>
+<p>Let's take a look at creating, populating, manipulating, and retrieving <i>one-to-many</i> associations. In the below we set up a <i>one-to-many</i> relationship between tables <code>cls0</code> and <code>cls2</code> respectively.</p>
+<pre><code class="language-javascript">DO $$
+DECLARE
+    idxcls0  integer:=0;
+    idxcls2  integer:=0;
+    ncls0    integer:=2;
+    ncls2    integer:=2;
+    _cls0_id integer;
+BEGIN
+    -- reinit
+    drop table if exists cls0 cascade;
+    drop table if exists cls2 cascade;
+    -- root
+    create table cls0(
+        cls0_id serial primary key,
+        value int
+    );
+    -- one-to-many
+    create table cls2(
+        cls2_id serial primary key not null,
+        cls0_id int references cls0(cls0_id) on delete cascade,
+        value int
+    );
+    LOOP
+        EXIT WHEN idxcls0=ncls0;
+        -- populate root
+        insert into cls0(
+            value
+        )values(
+            idxcls0*10
+        ) returning cls0_id into _cls0_id;
+        -- reset inner counter
+        idxcls2=0;
+        LOOP
+            EXIT WHEN idxcls2=ncls2;
+            -- populate one-to-one
+            insert into cls2(
+                value,
+                cls0_id
+            )values(
+                (idxcls0*ncls0+idxcls2)*1000,
+                _cls0_id
+            );
+            idxcls2=idxcls2+1;
+        END LOOP;
+       idxcls0=idxcls0+1;
+    END LOOP;
+END $$;
+select 
+    cls0.cls0_id,
+    cls0.value,
+    cls2.value
+from cls0
+left outer join
+    cls2
+on
+    cls0.cls0_id=cls2.cls0_id
+;</code></pre>
+<p>Table <code>cls0</code> is exactly the same as before, and <code>cls2</code> is very similar to <code>cls1</code> from the <i>one-to-one</i> example, however the <code>unique</code> constraint has been dropped, allowing multiple instances of <code>cls2</code> to point to the same instance of <code>cls0</code>.</p>
+<p>We use a nested <code>FOR</code> loop with individual counter and clamp variables to populate our data, again using the <code>returning</code> keyword on the <code>insert</code> of <code>cls0</code> to get a handle on the <code>serial primary key</code> in order to populate the <i>foreign key</i> when creating instances of <code>cls2</code></p>
+<p>We use a <code>left outer join</code> in the <code>select</code> statement. This will return both matches and mismatches from the <i>left</i> side, that of <code>cls0</code>. If desired an <code>inner join</code> can be utilized to return results where <i>left</i> and <i>right</i> tables are sucesfully matched.</p>
+<p>Sample output</p>
+<pre><code class="language-javascript">cls0_id,,value
+--------------
+1,0,0
+1,0,1000
+2,10,2000
+2,10,3000</code></pre>
+<h3>Many-to-Many</h3>
+<p>In order to create a <i>many-to-many</i> association we create what is called a <i>linking table</i>, <i>composite entity</i>, <i>bridge entity</i>, <i>associative entity</i> or sometimes <i>join table</i>.</p>
+<p>In the below we have to tables <code>cls0</code> and <code>cls1</code> that are associated with each other with a third table, <code>cls0_cls1</code> which stores <i>foreign keys</i> to the <i>primary keys</i> of <code>cls0</code> and <code>cls1</code>. We do the population in three passes, first creating instances of <code>cls0</code>, then of <code>cls1</code>, and then of <code>cls0_cls1</code>. While creating instances of <code>cls0</code> and <code>cls1</code> we push their <code>serial primary keys</code> onto arrays which are used in a third pass to populate <code>cls0_cls1</code>, resulting in every <code>cls0</code> instance being associated with every <code>cls1</code> instance.</p>
+<pre><code class="language-javascript">DO $$
+DECLARE
+    ----------------------
+    -- cls0 variables
+    ----------------------
+    idxcls0         int:=0;
+    ncls0           int:=4;
+    _cls0_id        int;
+    arr_cls0_id     int[];
+    ----------------------
+    -- cls1 variables
+    ----------------------
+    idxcls1         int:=0;
+    ncls1           int:=4;
+    _cls1_id        int;
+    arr_cls1_id     int[];
+    ----------------------
+    -- cls0_cls1 variables
+    ----------------------
+    idxcls0_cls1_d0 int:=0;
+    idxcls0_cls1_d1 int:=0;
+BEGIN
+    -- reinit
+    drop table if exists cls0 cascade;
+    drop table if exists cls1 cascade;
+    drop table if exists cls0_cls1 cascade;
+    -- many-to-many A
+    create table cls0(
+        cls0_id serial primary key not null,
+        value int
+    );
+    -- many-to-many B
+    create table cls1(
+        cls1_id serial primary key not null,
+        value int
+    );
+    -- many-to-many JOIN
+    create table cls0_cls1(
+        cls0_id int,
+        cls1_id int
+    );
+    ---------------------
+    -- populate cls0
+    ---------------------
+    -- clear array
+    arr_cls0_id=array_fill(1,ARRAY[0],ARRAY[0]);
+    idxcls0=0;
+    LOOP
+        EXIT WHEN idxcls0=ncls0;
+        insert into cls0(
+            value
+        )values(
+            idxcls0*10
+        ) returning cls0_id into _cls0_id;
+        -- push serial
+        arr_cls0_id=arr_cls0_id||_cls0_id;
+        idxcls0=idxcls0+1;
+    END LOOP;
+    ---------------------
+    -- populate cls1
+    ---------------------
+    -- clear array
+    arr_cls1_id=array_fill(1,ARRAY[0],ARRAY[0]);
+    idxcls1=0;
+    LOOP
+        EXIT WHEN idxcls1=ncls1;
+        insert into cls1(
+            value
+        )values(
+            idxcls1*100
+        ) returning cls1_id into _cls1_id;
+        -- push serial
+        arr_cls1_id=arr_cls1_id||_cls1_id;
+        idxcls1=idxcls1+1;
+    END LOOP;
+    ---------------------
+    -- populate cls0_cls1
+    ---------------------
+    idxcls0_cls1_d0=0;
+    LOOP
+        EXIT WHEN idxcls0_cls1_d0=array_length(arr_cls0_id,1);
+        idxcls0_cls1_d1=0;
+        LOOP
+            EXIT WHEN idxcls0_cls1_d1=array_length(arr_cls1_id,1);
+                insert into cls0_cls1(
+                    cls0_id,
+                    cls1_id
+                )values(
+                    arr_cls0_id[idxcls0_cls1_d0+1],
+                    arr_cls1_id[idxcls0_cls1_d1+1]
+                );
+            idxcls0_cls1_d1=idxcls0_cls1_d1+1;
+        END LOOP;
+        idxcls0_cls1_d0=idxcls0_cls1_d0+1;
+    END LOOP;
+END $$;
+ -- join select
+select 
+    cls0.cls0_id as cls0id,
+    cls1.cls1_id as cls1id,
+    cls0.value as cls0val,
+    cls1.value as cls1val
+from
+    cls0
+join
+    cls0_cls1
+on
+    cls0.cls0_id=cls0_cls1.cls1_id
+join
+    cls1
+on
+    cls1.cls1_id=cls0_cls1.cls1_id
+;</code></pre>
+<p>Sample output</p>
+<pre><code class="language-javascript">cls0id,cls1id,cls0val,cls1val
+-----------------------------
+1,1,0,0
+2,2,10,100
+3,3,20,200
+4,4,30,300
+1,1,0,0
+2,2,10,100
+3,3,20,200
+4,4,30,300
+1,1,0,0
+2,2,10,100
+3,3,20,200
+4,4,30,300
+1,1,0,0
+2,2,10,100
+3,3,20,200
+4,4,30,300</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

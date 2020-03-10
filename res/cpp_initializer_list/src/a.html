@@ -1,0 +1,49 @@
+<p>You can use <i>variadic functions</i> in <code>c++</code> using  <code>initializer_list</code>.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;string&gt;
+#include&lt;initializer_list&gt;
+template&lt;class T&gt;
+void fn(std::initializer_list&lt;T&gt; const&amp; list){
+  for(auto elem:list){
+    std::cout&lt;&lt;elem&lt;&lt;std::endl;
+  }
+}
+int main(int argc,char** argv){
+  fn({1,2});
+  return 0;
+}</code></pre>
+<p><code>std::initializer_list</code> was introduced in C++11.
+It initializes a container type with a pre-defined element set and has a syntax
+similar to <i>C arrays</i>.</p>
+<p>A <code>std::initializer_list</code> is also automatically constructed in certain cases like
+when a <i>braced-init-list</i> is used to <i>list_initialize</i> an object and the corresponding
+constructor accepts <code>std::initializer_list</code> as a parameter as in the above. It is also created when a a<i>braced-init-list</i> is used as the rvalue of an assignment and the assignment operator or function accepts <code>std::initializer_list</code> as parameter. Also, when <i>braced-init-list</i> is bound to auto an object of type <code>std::initializer_list</code> is constructed.</p>
+<p><code>initializer_list</code> does not have a subscript operator, but you can use something like <code>list.begin()[0]</code> for example.</p>
+<p><code>std::initializer_list</code> can be used int constructors as follows.</p>
+<pre><code class="language-javascript">#include&lt;initializer_list&gt;
+class Point{
+  public:
+    Point(std::initializer_list&lt;int&gt; il){
+      mx=il.size()>0?il.begin()[0]:0;
+      my=il.size()>1?il.begin()[1]:0;
+      mz=il.size()>2?il.begin()[2]:0;
+    };
+  private:
+    int mx;
+    int my;
+    int mz;
+};</code></pre>
+<p>More succinctly, you can pass <code>std::initializer_list</code> to a member's constructor, for example</p>
+<pre><code class="language-javascript">#include&lt;initializer_list&gt;
+#include&lt;vector&gt;
+class List{
+  public:
+    Point(std::initializer_list&lt;std::string&gt; il):mdata(il){};
+  private:
+    std::vector&lt;std::string&gt; mdata;
+};</code></pre>
+<script>
+  Prism.highlightAll()
+</script>
+
+

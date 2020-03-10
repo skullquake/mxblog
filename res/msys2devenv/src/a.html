@@ -1,0 +1,61 @@
+<p>
+Update msys2
+</p>
+<pre><code class="language-javascript">pacman -Syu</code></pre>
+<p>
+Then close the terminal and run mingw64.exe
+</p>
+<pre><code class="language-javascript">pacman \
+	-S\
+	development\
+	mingw-w64-x86_64_go\
+	base-devel\
+	gcc\
+	pv\
+	python2-pip\
+	python3-pip\
+	gnu-netcat\
+	tmux\
+	unzip\
+	mc\
+	vim\
+	cmake\
+	mingw-w64-x86_64-nodejs\
+	git\
+	mingw-w64-x86_64-editrights\
+	cygrunsrv\
+	openssh</code></pre>
+<p>
+Set up ssh
+</p>
+<pre><code class="language-javascript">ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa
+ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N '' -t dsa
+ssh-keygen -f /etc/ssh/ssh_host_ecdsa_key -N '' -t ecdsa
+ssh-keygen -f /etc/ssh/ssh_host_ed25519_key -N '' -t ed25519</code></pre>
+<p>
+Prior to starting the ssh server, edit /etc/ssh/sshd_config
+</p>
+<pre><code class="language-javascript">...
+UsePrivilegeSeperation no
+PasswordAuthentication yes</code></pre>
+<p>
+To start ssh server
+</p>
+<pre><code class="language-javascript">/usr/bin/sshd</code></pre>
+<p>
+Get <code>openjdk</code>
+</p>
+<pre><code class="language-javascript">wget https://download.java.net/java/GA/jdk13/5b8a42f3905b406298b72d750b6919f6/33/GPL/openjdk-13_windows-x64_bin.zip
+unzip openjdk-13_windows-x64_bin.zip -d /opt</code></pre>
+<p>Install <code>maven</code></p>
+<pre><code class="language-javascript">wget https://apache.is.co.za/maven/maven-3/3.6.3/binaries/apache-maven-3.6.2.tar.gz
+tar xf apache-maven-3.6.2.tar.gz -C /opt
+</code></pre>
+<p>Edit your <code>~/.profile</code></p>
+<pre><code class="language-javascript">export M2_HOME="/opt/apache-maven-3.6.2"
+PATH=$PATH:/opt/apache-maven-3.6.2/bin:/opt/jdk-13/bin
+export JAVA_HOME="/opt/jdk-13"</code></pre>
+
+<script>
+	Prism.highlightAll()
+</script>

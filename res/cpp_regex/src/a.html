@@ -1,0 +1,64 @@
+<p>Let's take a look at using <code>std::regex</code> to work with <i>regular expression</i>.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;regex&gt;
+int main(int argc,char** argv){
+  auto const rexp=std::regex("(foo|bar) baz");
+  std::cout
+    &lt;&lt;std::boolalpha
+    &lt;&lt;std::regex_match(std::string("foo baz"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("bar baz"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("qux baz"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("lorem foo baz ipsum"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("lorem bar baz ipsum"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("lorem qux baz ipsum"),rexp)&lt;&lt;std::endl
+
+  ;
+  return 0;
+}</code></pre>
+<p><code>std::regex</code> represents the regex taking a <code>std::string</code> in its constructor and <code>std::regex_search</code> is passed a <code>std::regex</code> and a <code>std::string</code> to apply it to delivering a <code>boolean</code> result.</p>
+<p><code>std::smatch</code> is a specialization of <code>std::match_results</code>
+and is used in <code>std::regex_search</code> to hold specific information on the
+<code>std::regex_search</code> results. Here <code>prefix()</code> holds what part of text preceeded the match, and we can call <code>length()</code> on that to determine
+the offset of the matched pard.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;regex&gt;
+int main(int argc,char** argv){
+  auto const rtxt=std::string("foo baz");
+  auto const rexp=std::regex("(foo|bar) baz");
+  auto sres=std::smatch();
+  bool const sfnd=std::regex_search(rtxt,sres,rexp);
+  std::cout&lt;&lt;(
+    sfnd?(
+       "Found ["
+      +std::to_string(sres.prefix().length())
+      +"]"
+    ):(
+      "Not found"
+    )
+  )&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p>Whereas <code>std::regex_search</code> searches the specified string for occurances
+within any range of the string for some specified regular expression pattern, <code>std::regex_match</code> checks that the entire string conforms to the
+specified regular expression pattern</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;regex&gt;
+int main(int argc,char** argv){
+  auto const rexp=std::regex("(foo|bar) baz");
+  std::cout
+    &lt;&lt;std::boolalpha
+    &lt;&lt;std::regex_match(std::string("foo baz"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("bar baz"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("qux baz"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("lorem foo baz ipsum"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("lorem bar baz ipsum"),rexp)&lt;&lt;std::endl
+    &lt;&lt;std::regex_match(std::string("lorem qux baz ipsum"),rexp)&lt;&lt;std::endl
+  ;
+  return 0;
+}</code></pre>
+<p>When working with regular expressions you'll often have to use escapement sequences and end up double escaping characters in strings in order to conform to what is required of the regular expressions, so it's good to keep in mind that you can use raw string literals to make life easier.</p>
+<p>In order to ignore case in your regular expressions, you can pass <code>std::regex::icase</code> as an argument to your <code>std::regex</code> constructor</p>
+<pre><code class="language-javascript">auto const rgx=std::regex("(some|regex)",std::regex::icase);</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

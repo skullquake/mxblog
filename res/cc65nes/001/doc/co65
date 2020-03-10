@@ -1,0 +1,25 @@
+Usage: co65 [options] file
+Short options:
+  -V			Print the version number
+  -g			Add debug info to object file
+  -h			Help (this text)
+  -m model		Override the o65 model
+  -n			Don't generate an output file
+  -o name		Name the output file
+  -v			Increase verbosity
+
+Long options:
+  --bss-label name	Define and export a BSS segment label
+  --bss-name seg	Set the name of the BSS segment
+  --code-label name	Define and export a CODE segment label
+  --code-name seg	Set the name of the CODE segment
+  --data-label name	Define and export a DATA segment label
+  --data-name seg	Set the name of the DATA segment
+  --debug-info		Add debug info to object file
+  --help		Help (this text)
+  --no-output		Don't generate an output file
+  --o65-model model	Override the o65 model
+  --verbose		Increase verbosity
+  --version		Print the version number
+  --zeropage-label name	Define and export a ZEROPAGE segment label
+  --zeropage-name seg	Set the name of the ZEROPAGE segment

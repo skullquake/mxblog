@@ -1,0 +1,9 @@
+Unknown option: --help
+Usage: ar65 <operation ...> lib file|module ...
+Operations are some of:
+	r	Add modules
+	d	Delete modules
+	t	List library table
+	v	Increase verbosity (put before other operation)
+	x	Extract modules
+	V	Print the archiver version

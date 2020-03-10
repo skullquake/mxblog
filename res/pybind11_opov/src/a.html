@@ -1,0 +1,82 @@
+<p>Operator overoading with <code>pybind11</code> requires the following headers</p>
+<pre><code class="language-javascript">#include&lt;pybind11/embed.h&gt;
+#include&lt;pybind11/operators.h&gt;
+#include&lt;functional&gt;
+...
+namespace py=pybind11;
+using namespace py::literals;</code></pre>
+<p>Lets assume the following rudimenatary <i>vector</i> class</p>
+<pre><code class="language-javascript">class Vec{
+	public:
+		Vec(float xP=0,float yP=0)
+			:m_x(xP),
+			 m_y(yP)
+		{
+			std::cout&lt;&lt;"Vec()"&lt;&lt;std::endl;
+		}
+		~Vec(){
+			std::cout&lt;&lt;"~Vec()"&lt;&lt;std::endl;
+		}
+		void setX(float xP){
+			this-&gt;m_x=xP;
+		}
+		void setY(float yP){
+			this-&gt;m_y=yP;
+		}
+		float getX(){
+			return this-&gt;m_x;
+		}
+		float getY(){
+			return this-&gt;m_y;
+		}
+		Vec operator+(const Vec&amp; b) const{
+			Vec v;
+			v.m_x=this-&gt;m_x+b.m_x;
+			v.m_y=this-&gt;m_y+b.m_y;
+			return v;
+		}
+		std::string toString() const {
+			return "["+std::to_string(this-&gt;m_x)+", "+std::to_string(this-&gt;m_y)+"]";
+		}
+	private:
+		float m_x;
+		float m_y;
+};</code></pre>
+<p>The class may be registered as follows</p>
+<pre><code class="language-javascript">PYBIND11_EMBEDDED_MODULE(imod,m){
+	pybind11::class_&lt;Vec&gt;(m,"Vec")
+		.def(pybind11::init&lt;const float&amp;,const float&amp;&gt;())
+		.def("setX",&amp;Vec::setX)
+		.def("getX",&amp;Vec::getX)
+		.def("setY",&amp;Vec::setX)
+		.def("getY",&amp;Vec::getY)
+		.def(py::self+py::self)
+		.def("__str__",&amp;Vec::toString)
+
+	;
+}</code></pre>
+<p>The relevant part is <code>.def(py::self+py::self)</code>, with <code>py::self</code> from <code>pybind11::literals</code>. We can now use the registered class as follows</p>
+<pre><code class="language-javascript">	...
+	pybind11::scoped_interpreter guard{};
+	pybind11::module m=pybind11::module::import("__main__");
+	pybind11::object s=m.attr("__dict__");
+	auto _Obj=py::module::import("imod");
+	pybind11::exec(
+		R"(
+import imod
+v=imod.Vec(1.0,1.0)
+v2=v+v;
+print(v2)
+		)",
+		s
+	);
+	...</code></pre>
+<p>Using overloaded operators via the API is very straightfoward, <code>pybind11::object</code> picks up the <code>+</code> operator</p>
+<pre><code class="language-javascript">	...
+	pybind11::object v=pybind11::module("imod").attr("Vec")(1.0,1.0);
+	pybind11::object v2=v+v;
+	std::cout&lt;&lt;v2.attr("toString")().cast&lt;std::string&gt;()&lt;&lt;std::endl;
+	...</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

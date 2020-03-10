@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+URL="http://localhost:8082/wordpress/wp_posts/post" 
+URL="https://inovosandbox-sandbox.mxapps.io/wordpress/wp_posts/post"
+DATA=@./src/a.html
+CURL=/usr/bin/curl
+#--------------------------------------------------------------------------------
+#build temp headers including the id from response
+#--------------------------------------------------------------------------------
+cat ./response|jq -r ".id"|while read ID;do
+	printf "id: %s\n" $ID|unix2dos>_headers
+done
+cat ./headers|unix2dos|while read LINE;do
+	echo $LINE |unix2dos>> ./_headers
+done
+

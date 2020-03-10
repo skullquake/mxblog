@@ -1,0 +1,48 @@
+<p><code>Lambda</code>s were introduced in <code>C++11</code> and allows you to write inline functions. They can be used for short snippets of code that you are not going to reuse, for example in algorithms.</p>
+<p><code>Lambda</code>s in <code>C++</code> provides a ligter syntax than <code>functor</code>s. Everything you can do with a <code>lambda</code> you can do with a <code>functor</code>.</p>
+<p>Important parts include the <i>capture clause</i> for controlling scope, <i>parameters</i> for specifying the parameters that will be used by the <code>lambda</code>, the <i>return type</i> that specifies the return type, and the <i>code</i> which goes inside the <code>lambda</code>. Here is an arbitrary <code>lambda</code> example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+int main(int argc,char** argv){
+  auto a=[](){
+    std::cout&lt;&lt;"test"&lt;&lt;std::endl;
+  };
+  a();
+  return 0;
+}</code></pre>
+<p>You can specify the scope within the <code>[]</code> part.</p>
+<ul>
+	<li><code>[]</code>: no captures, only local variables</li>
+	<li><code>[&amp;]</code>: capture all externals</li>
+	<li><code>[a,&amp;]</code>: capture <code>a</code> by value and <code>b</code> by reference</li>
+</ul>
+<p>If there are no captures, then the following will be invalid</p>
+<pre><code class="language-javascript">int a=0;
+auto b=[](){
+	std::cout&lt;&lt;a&lt;&lt;std::endl;
+};
+b();</code></pre>
+<p>In order to use <code>a</code> in the <code>lambda</code> the following serves as illustration</p>
+<pre><code class="language-javascript">int a=0;
+
+[&amp;](){
+	std::cout&lt;&lt;a&lt;&lt;std::endl;
+}();
+
+[a](){
+	std::cout&lt;&lt;a&lt;&lt;std::endl;
+}();
+
+[&amp;a](){
+	std::cout&lt;&lt;a&lt;&lt;std::endl;
+}();</code></pre>
+<p>The return type is normally inferred but can be explicitly set as in the following example</p>
+<pre><code class="language-javascript">std::cout&lt;&lt;([]()-&gt;int{return 0;}())&lt;&lt;std::endl;</code></pre>
+<p><code>Lamda</code>s are often used in <i>algorithms</i>, for example</p>
+<pre><code class="language-javascript">std::vector<int> a={0,1,2,3};
+std::for_each(a.begin(),a.end(),[](int b){
+	std::cout&lt;&lt;b&lt;&lt;std::endl;
+});</code></pre>
+
+<script>
+	Prism.highlightAll()
+</script>

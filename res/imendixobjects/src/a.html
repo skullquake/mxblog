@@ -1,0 +1,138 @@
+<p>Let's take a look at the basic operations for manipulating <code>com.mendix.systemwideinterfaces.core.IMendixObject</code>. You can perform functions on <code>IMendixObject</code>, but we'll startwith <code>com.mendix.core.Core</code> functions related to <code>IMendixObject</code></p>
+<p>In order to instantiate an object, you can use the following</p>
+<pre><code class="language-javascript">var obj=com.mendix.core.Core.instantiate(this.getContext(),"Module.Entity");</code></pre>
+<p>You can commit using the following</p>
+<pre><code class="language-javascript">com.mendix.core.commit(this.getContext(),obj);</code></pre>
+<p>You can also create an array of objects and commit as follows</p>
+<pre><code class="language-javascript">var arrobj=[];
+for(var i=0;i<8;i++){
+	arrobj.push(
+		com.mendix.core.Core.instantiate(
+			this.getContext(),
+			"Module.Entity"
+		)
+	);
+}
+com.mendix.core.commit(
+	this.getContext(),
+	arrobj
+);</code></pre>
+<p>All entities have attributes that you can set, either simple attributes or associations. In order to set the simple attributes you can use the following</p>
+<pre><code class="language-javascript">obj.setValue(
+	this.getContext(),
+	"Attribute",
+	value
+);</code></pre>
+<p>If you have a lot of objects to manipulate, perform the changes prior to comitting, for example</p>
+<pre><code class="language-javascript">var arrobj=[];
+for(var i=0;i<8;i++){
+	var obj=com.mendix.core.Core.instantiate(
+		this.getContext(),
+		"Module.Entity"
+	);
+	obj.setValue(
+		this.getContext(),
+		"Attribute",
+		value
+	);
+	arrobj.push(
+		obj
+	);
+}
+com.mendix.core.commit(
+	this.getContext(),
+	arrobj
+);</code></pre>
+<p>It is also possible to perform commits in transactions. For this we use the <code>com.mendix.systemwideinterfaces.core.IContext</code> class <code>startTransaction()</code> and <code>endTransaction()</code> functions.</p>
+<pre><code class="language-javascript">
+for(var i=0;i<8;i++){
+	this.getContext().startTransaction();
+	for(var j=0;j<8;j++){
+		var arrobj=[];
+		var obj=com.mendix.core.Core.instantiate(
+			this.getContext(),
+			"Module.Entity"
+		);
+		obj.setValue(
+			this.getContext(),
+			"Attribute",
+			value
+		);
+		arrobj.push(
+			obj
+		);
+	}
+	com.mendix.core.commit(
+		this.getContext(),
+		arrobj
+	);
+	this.getContext().endTransaction();
+}</code></pre>
+<p>You can use the <code>getValue()</code> member function of <code>com.mendix.systemwideinterfaces.core.IMendixObject</code> to get a value of an attribute, for example
+<pre><code class="language-javascript">var a=obj.getValue(
+	this.getContext(),
+	"Attribute"
+);</code></pre>
+<p>We also need to retrieve objects, and for this again we use <code>Core</code>, which provides a set of functions to accomplish this.</p>
+<pre><code class="language-javascript">var arrobj=com.mendix.core.Core.retrieveXPathQuery(
+	this.getContext(),
+	"//Module.Entity"
+);</code></pre>
+<p>This will return an array of all <code>Module.Entity</code>. The <code>String</code> parameter is an <code>xpath</code>.<code>com.mendix.core.Core.retrieveXPathQuery</code> also has some other versions that provides more control like the following</p>
+<pre><code class="language-javascript">java.util.list&lt;IMendixObject&gt; retreiveXPathQuery(
+	IContext context,
+	java.lang.String xpathQuery,
+	int amount,
+	int offset,
+	java.util.Map&lt;java.lang.String,java.lang.String&gt; sort,
+	int depth,
+	int timeout
+) throws CoreException</code></pre>
+<p>An example usage of <code>retrieveXPathQuery</code> might be as follows</p>
+<pre><code class="language-javascript">com.mendix.core.Core.retrieveXPathQuery(
+	"//System.User[Blocked]",
+	1,
+	0,
+	{
+		"Name":"ASCENDING"
+	},
+	0,
+	1000
+).forEach(
+	function(usr,usridx){
+		usr.setValue(
+			"Blocked",
+			false
+		);
+		com.mendix.core.Core.commit(
+			this.getContext(),
+			usr
+		);
+	}
+);</code></pre>
+<p>Somewhat related to <code>retrieveXPathQuery()</code> is <code>retrieveXPathQueryAggregate()</code>, which can be used to return aggregates like <code>COUNT</code> and <code>SUM</code></p>
+<pre><code class="language-javascript">var ndoc=com.mendix.core.Core.retrieveXPathQueryAggregate(
+	this.getContext(),
+	"COUNT(//System.FileDocument)
+);
+var szdoc=com.mendix.core.Core.retrieveXPathQueryAggregate(
+	this.getContext(),
+	"SUM(//System.FileDocument)/Size"
+);
+var avgszdoc=szdoc/ndoc;</code></pre>
+<p>More advanced aggregates are also possible</p>
+<pre><code class="language-javascript">var nemptydoc=com.mendix.core.Core.retrieveXPathQueryAggregate(
+	this.getContext(),
+	"COUNT(//System.FileDocument[Size=-1])"
+);
+var nadminsessions=com.mendix.core.Core.retrieveXPathQueryAggregate(
+	this.getContext(),
+	"COUNT(//System.Session)"+
+	"/System.Session_User/System.User"+
+	"/System.UserRoles/System.UserRole"+
+	"[Name='Administrator'])"
+);</code></pre>
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>

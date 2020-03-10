@@ -1,0 +1,5 @@
+accept: application/json
+title: cc65 - nes
+status: publish
+type: Post
+image: nintendo.png

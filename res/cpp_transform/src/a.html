@@ -1,0 +1,289 @@
+<p><code>std::transform</code> applies an operation on each element in a range or two ranges and stores the result in a specified range. The operation can be a function or a <i>lambda</i>.</p>
+<p>The prototype is as follows</p>
+<pre><code class="language-javascript">template&lt;
+	typename InputIterator,
+	typename OutputIterator,
+	typename UnaryOperation
+&gt;
+outputIterator transform(
+	InputIterator first1,
+	InputIterator last1,
+	OutpuIterator result,
+	UnaryOperation op
+);</code></pre>
+<h3>Transform with Unary Operator</h3>
+<p>The following applies a unary operator on the output</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+char fnup(char c){
+	return ::toupper(c);
+}
+char fnlo(char c){
+	return ::tolower(c);
+}
+int main(int argc,char** argv){
+	std::string data="Lorem Ipsum Sit Consecutar Dolor Amet";
+	std::cout&lt;&lt;data&lt;&lt;std::endl;
+	std::transform(data.begin(),data.end(),data.begin(),fnup);
+	std::cout&lt;&lt;data&lt;&lt;std::endl;
+	std::transform(data.begin(),data.end(),data.begin(),flo);
+	std::cout&lt;&lt;data&lt;&lt;std::endl;
+	return 0;
+}</code></pre>
+<p>Alternatively you could have used <code>::tolower</code> and <code>::toupper</code> directly.</p>
+<h3>Transform with Unary Operator using Lambdas</h3>
+<p>The following is similar to above, but with lambdas</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+int main(int argc,char** argv){
+	std::string data="Lorem Ipsum Sit Consecutar Dolor Amet";
+	std::cout&lt;&lt;data&lt;&lt;std::endl;
+	std::transform(data.begin(),data.end(),data.begin(),[](char&amp;c){
+			return ::tolower(c);
+	});
+	std::cout&lt;&lt;data&lt;&lt;std::endl;
+	std::transform(data.begin(),data.end(),data.begin(),[](char&amp;c){
+			return ::toupper(c);
+	});
+	std::cout&lt;&lt;data&lt;&lt;std::endl;
+	return 0;
+}</code></pre>
+<p>You can capture external variables and use them in the lambda as follows.</p>
+<pre><code class="language-javascript">...
+int idx=0;
+std::transform(data.begin(),data.end(),data.begin(),[&amp;](char&amp;c){
+		return idx++%2?char(::tolower(c)):char(::toupper(c));
+});
+...</code></pre>
+<h3>Binary Operation</h3>
+<p>When using <code>std::transform</code> in binary operation two ranges
+are specified along with the operation.</p>
+<p>The prototype for the binary overload is as follows</p>
+<pre><code class="language-javascript">template&lt;
+	typename InputIterator1,
+	typename InputIterator2,
+	typename OutputIterator,
+	typename UnaryOperation
+&gt;
+outputIterator transform(
+	InputIterator1 first1,
+	InputIterator1 last1,
+	InputIterator2 first2,
+	OutpuIterator result,
+	UnaryOperation op
+);</code></pre>
+
+<p>You need to ensure that the second 
+range is <i>at least as long</i> as the first.</p>
+<pre><code class="language-javascript">std::vector&lt;int&gt; v0={0,1,2,3};
+std::vector&lt;int&gt; v1={0,2,4,8};
+std::vector&lt;int&gt; v2;
+v2.resize(v1.size());
+for(auto a:v0){
+	std::cout&lt;&lt;a&lt;&lt;" ";
+}
+std::cout&lt;&lt;std::endl;
+for(auto a:v1){
+	std::cout&lt;&lt;a&lt;&lt;" ";
+}
+std::cout&lt;&lt;std::endl;
+std::transform(v0.begin(),v0.end(),v1.begin(),v2.begin(),[](int a,int b){
+		return a+b;
+});
+for(auto a:v2){
+	std::cout&lt;&lt;a&lt;&lt;" ";
+}
+std::cout&lt;&lt;std::endl;</code></pre>
+<p>The first argument to <code>std::transform</code> is the first range's
+start iterator, the second is the start range end iterator, the third
+is the second range's start iterator, the fourth is the output container
+start iterator, and the last is the operation</p>
+<p>The following illustrates working with different types of containers. Here we have a <code>std::map&lt;std::string,int&gt;</code> use <code>std::transform</code> to populate a <code>std::vector&lt;int&gt;</code> with the values of the map.</p>
+<pre><code class="language-javascript">std::map&lt;std::string,int&gt;  m={
+	std::make_pair("A",0),
+	std::make_pair("B",2),
+	std::make_pair("C",4),
+	std::make_pair("D",8)
+};
+std::vector&lt;int&gt; v;
+v.resize(m.size());
+std::transform(m.begin(),m.end(),v.begin(),[](auto a){return a.second;});
+for(auto a:v){
+	std::cout&lt;&lt;a&lt;&lt;" ";
+}
+std::cout&lt;&lt;std::endl;</code></pre>
+<p>You can also use <code>std::back_inserter</code> if you dont want
+to scale the <code>std::vector&lt;int&gt;</code> prior to populating
+it with <code>std::transform</code> as follows</p>
+<pre><code class="language-javascript">std::transform(m.begin(),m.end(),std::back_inserter(v),[](auto a){return a.second;});</code></pre>
+<p>The iterator <code>std::back_inserter(v)</code> provides an output iterator that does a <code>push_back</code> into the output container.</p>
+<h3>Class Member Functions</h3>
+<p>Suppose you have a class with an <i>accessor</i> that you would like to use for the
+<i>functor</i> to be used in <code>std::transform</code>. You cannot use this directly as in <code>MyClass::someAccessor</code>. Thus the following code will be invalid</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+class A{
+  public:
+    A(int maP):ma(maP){};
+    int get_ma()const{return this-&gt;ma;};
+  private:
+    int ma;
+};
+int main(int argc,char** argv){
+  std::vector&lt;A&gt; a={
+    A(0),
+    A(1),
+    A(2),
+    A(3)
+  };
+  std::vector&lt;int&gt; b;
+  std::transform(
+    std::begin(a),
+    std::end(a),
+    std::back_inserter(b),
+    A::get_ma//will not compile
+  );
+  std::cout&lt;&lt;"Class member member function:"&lt;&lt;std::endl;
+  for(auto c:b){
+    std::cout&lt;&lt;c&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p>This will deliver the following compiler error</p>
+<pre><code class="language-javascript">./src/a.cpp:103:7: error: call to non-static member function without an object argument
+                        A::get_ma
+                        ~~~^~~~~~
+1 error generated.</code></pre>
+<p>One workaround is to use a <code>lambda</code> as illustrated in the following
+example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;map&gt;
+class A{
+  public:
+    A(int maP):ma(maP){};
+    int get_ma()const{return this-&gt;ma;};
+  private:
+    int ma;
+};
+int main(int argc,char** argv){
+  std::vector&lt;A&gt; a={
+    A(0),
+    A(1),
+    A(2),
+    A(3)
+  };
+  std::vector&lt;int&gt; b;
+  std::transform(
+    std::begin(a),
+    std::end(a),
+    std::back_inserter(b),
+    [](auto c){
+      return c.get_ma();
+    }//will compile
+  );
+  std::cout&lt;&lt;"Class member lambdas:"&lt;&lt;std::endl;
+  for(auto c:b){
+    std::cout&lt;&lt;c&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p>Instead of using a <code>lambda</code>, you can also use <code>std::function</code></p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+class A{
+  public:
+    A(int maP):ma(maP){};
+    int get_ma()const{return this-&gt;ma;};
+  private:
+    int ma;
+};
+int main(int argc,char** argv){
+  std::vector&lt;A&gt; a={
+    A(0),
+    A(1),
+    A(2),
+    A(3)
+  };
+  std::vector&lt;int&gt; b;
+  std::transform(
+    std::begin(a),
+    std::end(a),
+    std::back_inserter(b),
+    std::function&lt;int(A const&amp;)&gt;(&amp;A::get_ma)
+  );
+  std::cout&lt;&lt;"Class member std::functions:"&lt;&lt;std::endl;
+  for(auto c:b){
+    std::cout&lt;&lt;c&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p><code>std::function</code> for the most part accepts anything callable, including <i>free functions</i>, <i>member functions</i> and <i>function objects</i>. It wraps callables into an object defining <code>operator()</code> forwarding the call to the wrapped callable. It basically takes the member function out of the context of the class.</p>
+<p>Alternatively you can use <code>std::mem_fn</code>. To use it, include <code>&lt;functional&gt;</code>.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;functional&gt;
+class A{
+  public:
+    A(int maP):ma(maP){};
+    int get_ma()const{return this-&gt;ma;};
+  private:
+    int ma;
+};
+int main(int argc,char** argv){
+  std::vector&lt;A&gt; a={
+    A(0),
+    A(1),
+    A(2),
+    A(3)
+  };
+  std::vector&lt;int&gt; b;
+  std::transform(
+    std::begin(a),
+    std::end(a),
+    std::back_inserter(b),
+    std::mem_fn(&amp;A::get_ma)
+  );
+  std::cout&lt;&lt;"Class member std::functions:"&lt;&lt;std::endl;
+  for(auto c:b){
+    std::cout&lt;&lt;c&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p><code>std::mem_fn</code> first appeared in <code>C++11</code> and wraps a class member
+function, also defining <code>operator()</code>. It accepts an object of a class and invokes the method on the object. You pass it a pointer to a member function.</p>
+<p>If you have access to the <code>range</code> library you can also use <code>ranges::views::transform</code>, the counterpart to <code>std::transform</code> from the <code>STL</code>.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;range/v3/all.hpp&gt;
+class A{
+  public:
+    A(int maP):ma(maP){};
+    int get_ma()const{return this-&gt;ma;};
+  private:
+    int ma;
+};
+int main(int argc,char** argv){
+  std::vector&lt;A&gt; a={
+    A(0),
+    A(1),
+    A(2),
+    A(3)
+  };
+  auto b=
+     a
+    |ranges::views::transform(&amp;A::get_ma)
+  ;
+  std::cout&lt;&lt;"Class member ranges::views::transform:"&lt;&lt;std::endl;
+  for(auto c:b){
+    std::cout&lt;&lt;c&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+

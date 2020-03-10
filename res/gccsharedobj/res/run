@@ -1,0 +1,5 @@
+#!/bin/bash
+LD_LIBRARY_PATH=./lib:$LD_LIBRARY_PATH
+./bin/a.out
+printf "Shared Libraries used in ./bin/a.out:\n"
+ldd ./bin/a.out

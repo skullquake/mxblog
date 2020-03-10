@@ -1,0 +1,5 @@
+accept: application/json
+title: PGSQL: Associations
+status: publish
+type: Post
+image: postgres.png

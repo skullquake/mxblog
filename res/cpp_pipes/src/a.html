@@ -1,0 +1,95 @@
+<p><code>Pipes</code> is <a href="https://www.fluentcpp.com">Jonathan Boccara</a>'s nifty header only library for data pipelining.</p>
+<pre><code class="language-javascript">wget https://github.com/joboccara/pipes/archive/master.zip
+unzip ./master.zip
+cd ./pipes-master
+mkdir ./build
+cd ./build
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
+make -j8 install</code></pre>
+<p>For <code>termux android</code> I ended up also passing in <code>-DCMAKE_MODULE_LINKER_FLAGS=-llog</code> and <code>-DCMAKE_EXE_LINKER_FLAGS=-llog</code> to get the logging library in. With everything installed you can compile the following for a test</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;pipes/pipes.hpp&gt;
+int main(int argc,char** argv){
+	auto const src=std::vector&lt;int&gt;{0,1,2,3,4,5,6,7,8,9};
+	auto dst= std::vector&lt;int&gt;{};
+	src&gt;&gt;=pipes::filter([](int i){return i%2==0;})
+	      &gt;&gt;=pipes::transform([](int i){return i*2;})
+	      &gt;&gt;=pipes::push_back(dst);
+	for(auto el:dst){
+		std::cout&lt;&lt;el&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	return 0;
+}</code></pre>
+<p>In the above, each element of <code>src</code> is sent into <code>filter</code>. Each element of
+<code>filter</code> is sent to <code>transform</code>, and each element of <code>transform</code> is sent to <code>push_back</code>.</p>
+<p>You can set up elaborate pipelines like the following</p>
+<pre><code class="language-javascript">A&gt;&gt;=pipes::transform(f)
+ &gt;&gt;=pipes::filter(p)
+ &gt;&gt;=pipes::unzip(pipes::push_back(B),
+	pipes::fork(pipes::push_back(C),
+                pipes::filter(q)&gt;&gt;=pipes::push_back(D),
+                pipes::filter(r)&gt;&gt;=pipes::push_back(E));</code></pre>
+<p>In the above, <code>std::fork</code> gets <code>std::pair</code>s/<code>std::tuple</code>s breaking them down into individual elements to more pipes using <code>pipes::fork</code>.</p>
+<p><code>pipes::fork</code> does much the same as an operating system fork, forking the input to multiple pipes for further processing</p>
+<p><code>pipes::mux</code> can be used to manipulate more than one collection at the same time, as illustrated in the following example</p>
+<pre><code class="language-javascript"> std::vector&lt;int&gt; a={0,1,2,3};
+	std::vector&lt;int&gt; b={0,10,20,30};
+	std::vector&lt;int&gt; c;
+	pipes::mux(a,b)
+		&gt;&gt;=pipes::transform([](int a,int b){return a+b;})
+		&gt;&gt;=pipes::push_back(c)
+	;
+	for(auto d:c){
+		std::cout&lt;&lt;d&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;</code></pre>
+<p><code>pipes::cartesian_product</code> processes all possible combinations of a number of collections, as illustrated in the following example</p>
+<pre><code class="language-javascript">auto const a=std::vector&lt;int&gt;{1, 2, 3};
+auto const b=std::vector&lt;int&gt;{1, 2, 3};
+auto c=std::vector&lt;int&gt;{};
+pipes::cartesian_product(a,b)
+  &gt;&gt;=pipes::transform([](int d, int e){
+    std::cout&lt;&lt;"processing ["&lt;&lt;d&lt;&lt;":"&lt;&lt;e&lt;&lt;"]"&lt;&lt;std::endl;
+    return d+e;}
+  )
+  &gt;&gt;=pipes::push_back(c)
+;
+for(auto d:c){
+  std::cout&lt;&lt;d&lt;&lt;" ";
+}
+std::cout&lt;&lt;std::endl;</code></pre>
+<p>You can operate on pairwise adjacencies in a collection using <code>pipes::adjacent</code> as follows</p>
+<pre><code class="language-javascript">auto const a=std::vector&lt;int&gt;{1, 2, 3};
+auto b=std::vector&lt;int&gt;{};
+pipes::adjacent(a)
+  &gt;&gt;=pipes::transform([](int c,int d){
+    std::cout&lt;&lt;"processing ["&lt;&lt;c&lt;&lt;":"&lt;&lt;d&lt;&lt;"]"&lt;&lt;std::endl;
+    return c+d;}
+  )
+  &gt;&gt;=pipes::push_back(b)
+;
+for(auto c:b){
+  std::cout&lt;&lt;c&lt;&lt;" ";
+}
+std::cout&lt;&lt;std::endl;</code></pre>
+<p>For working on all combinations of elements of a single container you can use <code>pipes::conbinations</code> asillustrated in the following</p>
+<pre><code class="language-javascript">auto const a=std::vector&lt;int&gt;{1, 2, 3};
+auto b=std::vector&lt;int&gt;{};
+pipes::adjacent(a)
+  &gt;&gt;=pipes::combindations([](int c,int d){
+    std::cout&lt;&lt;"processing ["&lt;&lt;c&lt;&lt;":"&lt;&lt;d&lt;&lt;"]"&lt;&lt;std::endl;
+    return c+d;}
+  )
+  &gt;&gt;=pipes::push_back(b)
+;
+for(auto c:b){
+  std::cout&lt;&lt;c&lt;&lt;" ";
+}
+std::cout&lt;&lt;std::endl;</code></pre>
+<p><code>pipes::to_out_stream</code> can be used to send elements to an output stream, for example
+<code>pipes::to_out_stream(std::cout)</code></p>
+<script>
+	Prism.highlightAll()
+</script>

@@ -1,0 +1,4 @@
+#!/bin/bash
+./bin/a.out
+printf "Shared Libraries used in ./bin/a.out:\n"
+ldd ./bin/a.out

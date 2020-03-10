@@ -1,0 +1,20 @@
+<p>STL <code>std::all_of</code> from <code>algorithm</code> operates on a whole range of elements and performing some check and if all checks evaluates to true it returns, otherwise it returns false</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;algorithm&gt;
+int main(int argc,char** argv){
+  std::vector&lt;int&gt; a={0,2,4,6};
+  std::vector&lt;int&gt; b={0,2,4,5};
+  std::cout&lt;&lt;"A:"&lt;&lt;(std::all_of(a.begin(),a.end(),[](int c){
+    return c%2==0;}
+  )?"all even":"not all even")&lt;&lt;std::endl;
+  std::cout&lt;&lt;"B:"&lt;&lt;(std::all_of(b.begin(),b.end(),[](int c){
+    return c%2==0;}
+  )?"all even":"not all even")&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+
+

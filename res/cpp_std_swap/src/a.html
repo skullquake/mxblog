@@ -1,0 +1,25 @@
+<p>Let's take a look at <code>std::swap</code>, which you can use to swap similar typed swappable types. This provides a generic swapping function you can use on generics.</p>
+<pre><code class="language-javascript">#include&lt;utility&gt;
+#include&lt;iostream&gt;
+int main(int argc,char** argv){
+	{
+		int a=0;
+		int b=1;
+		std::cout&lt;&lt;"["&lt;&lt;a&lt;&lt;":"&lt;&lt;b&lt;&lt;"]"&lt;&lt;std::endl;
+		std::swap(a,b);
+		std::cout&lt;&lt;"["&lt;&lt;a&lt;&lt;":"&lt;&lt;b&lt;&lt;"]"&lt;&lt;std::endl;
+	}
+	{
+		std::string a("foo");
+		std::string b("bar");
+		std::cout&lt;&lt;"["&lt;&lt;a&lt;&lt;":"&lt;&lt;b&lt;&lt;"]"&lt;&lt;std::endl;
+		std::swap(a,b);
+		std::cout&lt;&lt;"["&lt;&lt;a&lt;&lt;":"&lt;&lt;b&lt;&lt;"]"&lt;&lt;std::endl;
+	}
+
+	return 0;
+}
+</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

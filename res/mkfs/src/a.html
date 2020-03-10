@@ -1,0 +1,354 @@
+<p>
+	Let's take a look at the <code>mkfs</code> utility. <code>mkfs</code> is used to create file system images, for example virtual disk or floppy images.
+</p>
+<p>
+	The syntax is as follows
+<pre><code class="language-bash">mkfs [options] [-t type] [fs-option] device [size]</code></pre>
+<p>
+	When creating image files the <code>device</code> argument is the path to a file, but if you have an actual device connected, for example <code>/dev/hda1</code>, you can have it set to that.
+</p>
+<p>
+	<code>mkfs</code> is a front-end for various <code>mkfs.type</code> utility, for example <code>mkfs.vfat</code>. To list your <code>mkfs</code> utilities run the following.
+</p>
+<pre><code class="language-bash">ls ~/../usr/bin|grep mkfs
+
+mkfs.bfs
+mkfs.cramfs
+mkfs.ext2
+mkfs.ext3
+mkfs.ext4
+mkfs.minix</code></pre>
+<p>
+You can either use the specific flavours of <code>mkfs</code> directly, or when using the <code>mkfs</code> front-end, use the <code>-t</code> flag to specify the file system type. <code>fs-options</code> is used to pass specific flags to the actual file system builder.
+</p>
+<p>
+	If <code>mkfs</code> succeeded in creating an image it will return 0, otherwise it returns 1.
+</p>
+<p>
+	Let's take a look at <code>mkfs.ext2</code>, the utility to create an ext2/exte3/ext4 file system. It has the following syntax
+</p>
+<pre><code class="language-bash">mke2fs
+	[-c|-lfilename]
+	[-b block-size]
+	[-C cluster-size]
+	[-d root-directory]
+	[-D]
+	[-g blocks-per-group]
+	[-G number-of-groups]
+	[-i bytes-per-inode]
+	[-I inode-size]
+	[-j]
+	[-J journal-options]
+	[-N number-of-inodes]
+	[-n]
+	[-m reserved-blocks-percentage]
+	[-o creator-os]
+	[-O [^]feature[,...]]
+	[-q][
+	-r fs-revision-level]
+	[-E extended-options]
+	[-v]
+	[-F][-L volume-label]
+	[-M last-mounted-directory]
+	[-S]
+	[-t fs-type][
+	-T usage-type]
+	[-U UUID]
+	[-V]
+	[-e errors-behavior]
+	[-z undo_file]
+	device
+	[fs-size]</code></pre>
+<p>
+	As you can see there are quite a lot of options. Lets see how we
+	can create a simple floppy image in the <code>ext2</code>
+	format
+</p>
+<pre><code class="language-bash">mkfs.ext2 ./a.img 1440</code></pre>
+<p>
+	This will create a <code>Linux rev 1.0 ext filesystem data, UUID=XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX (large files)</code> file <code>a.img</code>
+</p>
+<p>
+The <code>fs-size</code> flag specifies the size of the image. By default it is interpreted as a power-of-two <code>kilobytes</code> size. You can add the suffix <code>m</code> to specify the size in megabytes.
+</p>
+<pre><code class="language-bash">mkfs.ext2 ./a.img 8m</code></pre>
+<p>
+	If you used a device instead of a file, e.g. <code>/dev/sdb0</code> then <code>mkfs.ext2</code> will write the image to the device at the full device capacity.
+</p>
+<p>
+	The default parameters for <code>mkfs.ext2</code> is usually
+	stored at <code>/etc/mke2fs.conf</code>.
+</p>
+<p>
+	Let's take a look at setting some of the options like
+	<code>block-size</code> and <code>new-volume-label</code>
+	and see how we can verify the properties we used.
+	To specify the <code>block-size</code> we'll use the
+	<code>-b</code> flag and to set the <code>new-volume-label</code>
+	we'll use the <code>-L</code> flag.
+</p>
+<pre><code class="language-bash">mkfs.ext2 -b 1024 -L myfloppy ./a.img 1440</code></pre>
+<p>
+	This should create an image file <code>a.img</code> of size
+	<code>1440kb</code> with a <code>block-size</code> of
+	<code>1024</code> and a <code>new-folume-label</code> of <code>myfloppy</code>.
+	Simply running <code>file</code> on <code>a.img</code> will
+	deliver the following results.
+</p>
+<pre><code class="language-bash">./a.img:
+	Linux rev 1.0 ext2 filesystem data,
+	UUID=c5294c8e-c37a-4904-86a7-a538a56f7578,
+	volume name "myfloppy" (extents) (64bit) (large files) (huge files)</code></pre>
+<p>
+	This does indeed verify our results, but there exist some other
+	utilities for checking file systems like <code>fsck</code> and
+	<code>dumpe2fs</code>.
+</p>
+<p>
+	<code>fsck.ext2</code> can be used to inspect as well as
+	repair file systems.
+</p>
+<pre><code class="language-bash">fsck.ext2 ./a.img</code></pre>
+<p>
+	This will deliver the following results for our image
+</p>
+<pre><code class="language-bash">e2fsck 1.45.2 (27-May-2019)
+myfloppy: clean, 11/184 files, 53/1440 blocks</code></pre>
+<p>
+	Like <code>mkfs</code> you can point it to either
+	a file or a device, but should not be run on mounted 
+	file systems.
+</p>
+<p>
+	To get the full information on our image we can use
+	the <code>dumpe2fs</code> utility.
+</p>
+<pre><code class="language-bash">dump2efs ./a.img</code></pre>
+<p>
+	This will deliver the following information
+</p>
+<pre><code class="language-bash">dumpe2fs 1.45.2 (27-May-2019)
+Filesystem volume name:   myfloppy
+Last mounted on:          &lt;not available&gt;
+Filesystem UUID:          c5294c8e-c37a-4904-86a7-a538a56f7578
+Filesystem magic number:  0xEF53
+Filesystem revision #:    1 (dynamic)
+Filesystem features:      ext_attr resize_inode dir_index filetype extent 64bit flex_bg sparse_super large_file huge_file dir_nlink extra_isize metadata_csum
+Filesystem flags:         unsigned_directory_hash 
+Default mount options:    user_xattr acl
+Filesystem state:         clean
+Errors behavior:          Continue
+Filesystem OS type:       Linux
+Inode count:              184
+Block count:              1440
+Reserved block count:     72
+Free blocks:              1387
+Free inodes:              173
+First block:              1
+Block size:               1024
+Fragment size:            1024
+Group descriptor size:    64
+Reserved GDT blocks:      11
+Blocks per group:         8192
+Fragments per group:      8192
+Inodes per group:         184
+Inode blocks per group:   23
+Flex block group size:    16
+Filesystem created:       Tue Jul 16 08:42:24 2019
+Last mount time:          n/a
+Last write time:          Tue Jul 16 08:42:24 2019
+Mount count:              0
+Maximum mount count:      -1
+Last checked:             Tue Jul 16 08:42:24 2019
+Check interval:           0 (&lt;none&gt;)
+Lifetime writes:          30 kB
+Reserved blocks uid:      0 (user root)
+Reserved blocks gid:      0 (group root)
+First inode:              11
+Inode size:	          128
+Default directory hash:   half_md4
+Directory Hash Seed:      5cef6b1e-2fd0-4fb4-8008-2eda913440a4
+Checksum type:            crc32c
+Checksum:                 0xb1c1753c
+
+
+Group 0: (Blocks 1-1439) csum 0x01c1
+  Primary superblock at 1, Group descriptors at 2-2
+  Reserved GDT blocks at 3-13
+  Block bitmap at 14 (+13), csum 0x03e3cd9a
+  Inode bitmap at 30 (+29), csum 0xbf706b92
+  Inode table at 46-68 (+45)
+  1387 free blocks, 173 free inodes, 2 directories, 173 unused inodes
+  Free blocks: 28-29, 31-37, 39-45, 69-1439
+  Free inodes: 12-184</code></pre>
+<p>
+	Here we can confirm <code>Block size: 1024</code> was set,
+	and also that the <code>new-volume-label</code> was set
+	to <code>myfloppy</code>. This can also be used to verify
+	whatever other parameters we set when we created the image
+	file.
+</p>
+<p>
+	If we want to create an image with the contents of some
+	folder stored somwhere on it we can use the <code>-d</code>
+	flag and provide a <code>root-directory</code> parameter
+</p>
+<pre><code class="language-bash">mkfs.ext2 -b 1024 -L myfloppy -d ./src ./a.img 1440</code></pre>
+<p>
+	This will place the relative directory <code>./src</code> at the
+	root of our image. Running <code>dump2efs</code> on this image 
+	will reflect this with <code>172 free inodes</code>, whereas
+	the first image we created had <code>173 free inodes</code>
+</p>
+<p>
+	The <i>inode</i> represents a file, folder, or symlink. We 
+	can also manipulate the parameters of the <i>inode</i> when
+	creating an image. There area few parameters involving
+	<i>inodes</i> that you can manipulate with <code>mkfs.ext2</code>
+</p>
+<ul>
+	<li>
+		<code>bytes-per-inode</code>
+	</li>
+	<li>
+		<code>inode-size</code>
+	</li>
+	<li>
+		<code>number-of-inodes</code>
+	</li>
+	<li>
+		<code>lazy_itable_init</code>
+	</li>
+	<li>
+		<code>lazy_journal_init</code>
+	</li>
+	<li>
+		<code>packed_meta_blocks</code>
+	</li>
+</ul>
+<p>
+	The last three options are set in the <i>journalling options</i>
+	and the first are set as flags to <code>mkfs.ext2</code>
+</p>
+<p>
+	<code>bytes-per-inode</code> is set using the <code>-i</code>
+	flag and specifies the bytes per inode ratio.
+	<code>mkfs.ext2</code> will go on an create an inode for every
+	<code>bytes-per-inode</code> space on the disk. So if the disk
+	has <code>1440k</code> disk space and you set <code>bytes-per-inode</code> to <code>1024</code> it will create <code>1440k/1024b</code> inodes
+</p>
+<p>
+	Lets take a look at two settings and compare the output
+	of <code>dumpe2fs</code>
+</p>
+<pre><code class="language-bash">mkfs.ext2 -b 1024 -L myfloppy -i 1024 -d ./src ./a.img 1440</code></pre>
+<p>
+	<code>dumpe2fs</code> will deliver the following relevant line
+</p>
+<pre><code class="language-bash">Free inodes:1428</code></pre>
+<pre><code class="language-bash">mkfs.ext2 -b 1024 -L myfloppy -i 2048 -d ./src ./b.img 1440</code></pre>
+<p>
+	For this image, <code>dumpe2fs</code> will deliver the following relevant line
+</p>
+<pre><code class="language-bash">Free inodes:708</code></pre>
+<p>
+	As is observed the free inodes for the image with
+	<code>bytes-per-inode</code> set to 1024 is greater
+	than the image with <code>bytes-per-inode</code>
+	set to 2048
+</p>
+<p>
+	According to the <code>man</code> page for <code>mkfs.ext2</code>
+	the value for <code>bytes-per-inode</code> should generally
+	speaking not be smaller than the <code>blocksize</code> of the filesystem. In fact, if you have a <code>blocksize</code> set to say <code>1024</code>
+	and try to set your <code>bytes-per-inode</code> to something less
+	than <code>1024</code> the <code>mkfs.ext2</code> will block you
+	from doing so. Additionally, if you have an idea of how many
+	files and folders will exist on your file system, you should
+	adjust the <code>bytes-per-inode</code> value with this in mind.
+	For example if you have a drive that will host svn, then
+	in all probability there will be many many files and folders
+	stored on such a system, and you need access to lots of inodes.
+	If you are using the disk or image for storing fewer files and
+	folders, for example a few very large files, then the
+	<code>bytes-per-inode</code> value can be larger, because
+	less files and folders will be required. Also, once this 
+	value has been set, it is not possible for <code>ext2</code>
+	to change the value afterwards.
+</p>
+<p>
+	<code>inode-size</code> can be specified with the <code>-I</code>
+	flag, and it represents the size of each inode in <i>bytes</i>.
+	This value must be <code>^2</code> and <code>&lt;=128</code>
+	In the <code>ext2</code> file system there exists and
+	<code>inode table</code>, and this table will consume more space
+	the larger the <code>inode-size</code>, and the less usable
+	space will be on the filesystem. It will also impact the
+	performance of the filesystem. Again, after it is set
+	in initializing the file system, you cannot change it.
+	The relevant line in <code>dumpe2fs</code> that indicates
+	this value is <code>Inode size</code>, for example
+</p>
+<pre><code class="language-bash">Inode size: 128</code></pre>
+<p>
+	The main reason for having an <code>inode-size</code> greater
+	than the default 128 or 256 is because <code>kernels</code> after
+	<code>2.6.10</code> have the ability to utilize larger
+	inodes to store extended attributes and improve performance.
+	File systems set up in such a way will not be mountable by
+	older <code>kernels</code> or the attributes will simply
+	be ignored.
+</p>
+<p>
+	There are some other utility programs related to <code>e2fs</code>
+</p>
+<ul>
+	<li>
+		<code>resize2fs</code>
+	</li>
+	<li>
+		<code>tune2fs</code>
+	</li>
+</ul>
+<p>
+	Let's take a look at <code>tune2fs</code>. You can use this
+	utility to modify attributes on an <code>ext2</code> file system.
+	It has the following syntax
+</p>
+<pre><code class="language-bash">tune2fs
+	[-l]
+	[-c max-mount-counts]
+	[-e errors-behavior]
+	[-f]
+	[-i interval-between-checks]
+	[-I new_inode_size]
+	[-j]
+	[-J journal-options]
+	[-m reserved-blocks-percentage]
+	[-o [^]mount-options[,...]]
+	[-r reserved-blocks-count]
+	[-u user]
+	[-g group]
+	[-C mount-count]
+	[-E extended-options]
+	[-L volume-label]
+	[-M last-mounted-directory]
+	[-O [^]feature[,...]]
+	[-Q quota-options]
+	[-T time-last-checked]
+	[-U UUID]
+	[-z undo_file]
+	device</code></pre>
+<p>
+	<code>device</code> may be an image file or a device. Let's
+	change one of the attributes using <code>tune2fs</code> and then
+	use <code>dumpe2fs</code> to see the change reflected
+</p>
+<pre><code class="language-bash">tune2fs -M ./src ./a.img</code></pre>
+<p>
+	Running <code>dumpe2fs</code> on <code>./a.img</code> will
+	the change in <code>last-mounted-directory</code> as follows
+</p>
+<script>
+	Prism.highlightAll()
+</script>

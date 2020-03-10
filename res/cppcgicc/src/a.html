@@ -1,0 +1,81 @@
+<p><code>libcgicc</code> makes it easier to program CGI scripts in <code>c++</code>. Below, compiled from source, installed, and tested with <code>apache</code> server under <code>termux</code> (very slow ssh connection!)</p>
+<script id="asciicast-MeRxAUhsVVQmPL06TGIPZ7Wu4" src="https://asciinema.org/a/MeRxAUhsVVQmPL06TGIPZ7Wu4.js" async></script>
+<p>Sample from <a href="http://www.yolinux.com/TUTORIALS/LinuxTutorialC++CGI.html">yolinux.com</a></p>
+<pre><code class="language-javascript">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;string&gt;
+
+#include "cgicc/CgiDefs.h"
+#include "cgicc/Cgicc.h"
+#include "cgicc/HTTPHTMLHeader.h"
+#include "cgicc/HTMLClasses.h"
+
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+using namespace std;
+using namespace cgicc;     // Or reference as cgicc::Cgicc formData; below in object instantiation.
+
+int main(int argc, char **argv)
+{
+    try {
+       Cgicc formData;
+
+       // Send HTTP header: Content-type: text/html
+       cout &lt;&lt; HTTPHTMLHeader() &lt;&lt; endl;
+
+       // Print: &lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd"&gt;
+       cout &lt;&lt; HTMLDoctype(HTMLDoctype::eStrict) &lt;&lt; endl;
+
+       // Print: &lt;html lang="en" dir="LTR"&gt;
+       cout &lt;&lt; html().set("lang", "EN").set("dir", "LTR") &lt;&lt; endl;
+
+       // Set up the HTML document
+       cout &lt;&lt; html() &lt;&lt; head() &lt;&lt; title("Cgicc example") &lt;&lt; head() &lt;&lt; endl;
+       cout &lt;&lt; body().set("bgcolor","#cccccc").set("text","#000000").set("link","#0000ff").set("vlink","#000080") &lt;&lt; endl;
+
+       cout &lt;&lt; h1("This is a demonstration of the GNU CgiCC library") &lt;&lt; endl;
+
+       form_iterator fvalue1 = formData.getElement("value1");
+       if( !fvalue1-&gt;isEmpty() &amp;&amp; fvalue1 != (*formData).end()) {
+          cout &lt;&lt; "Value1: " &lt;&lt; **fvalue1 &lt;&lt; endl;
+       }
+       else
+          cout &lt;&lt; "No text entered for value1" &lt;&lt; endl;
+
+       cout &lt;&lt; p();
+
+       form_iterator fvalue2 = formData.getElement("value2");
+       if( !fvalue2-&gt;isEmpty() &amp;&amp; fvalue2 != (*formData).end()) {
+          // Note this is just a different way to access the string class.
+          // See the YoLinux GNU string class tutorial.
+          cout &lt;&lt; "Value2: " &lt;&lt; (**fvalue2).c_str() &lt;&lt; endl;
+       }
+
+       cout &lt;&lt; p();
+
+       form_iterator fvalue3 = formData.getElement("value3");
+       if( !fvalue3-&gt;isEmpty() &amp;&amp; fvalue3 != (*formData).end()) {
+          cout &lt;&lt; "Value3: " &lt;&lt; **fvalue3 &lt;&lt; endl;
+       }
+
+       cout &lt;&lt; p();
+
+       form_iterator fvalue4 = formData.getElement("value4");
+       if( !fvalue4-&gt;isEmpty() &amp;&amp; fvalue4 != (*formData).end()) {
+          cout &lt;&lt; "Value4: " &lt;&lt; **fvalue4 &lt;&lt; endl;
+       }
+
+       // Close the HTML document
+       cout &lt;&lt; body() &lt;&lt; html();
+    }
+    catch(exception&amp; e) {
+       // handle any errors here.
+       cout &lt;&lt; "ERROR!!" &lt;&lt; endl;
+    }
+    return 0;   // To avoid Apache errors.
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+

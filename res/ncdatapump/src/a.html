@@ -1,0 +1,68 @@
+<p>
+	Let's look at how we can create something of a <i>data pump</i>
+	using <code>netcat</code>, <code>mknod</code> and some shell scripting.
+	The idea is to set something up in the terminal that continually pumps
+	out data on a port. First, make a named pipe
+</p>
+<pre><code class="language-bash">mknod p ./f</code></pre>
+<p>
+	This will create <code>./f</code>, a named pipe. After that, lets
+	keep the pipe open with the following dummy command
+</p>
+<pre><code class="language-bash">sleep 60000 &gt; ./f</code></pre>
+<p>
+	This will keep the special file open for <code>60000</code> seconds.
+	After this, lets connect <code>netcat to serve up that special file
+</p>
+<pre><code class="language-bash">cat /dev/urandom|xxd|nc -l 8080</code></pre>
+<p>
+	This will write content out continually, piping into <code>netcat</code>,
+	which will send it to port <code>8080</code> on the local machine
+</p>
+<p>
+	You can output the content of that port from the same or from a different
+	machine using the following
+</p>
+<pre><code class="language-bash">nc 127.0.0.1 8080</pre></code>
+<p>
+	If you are on a different machine, just replace the <code>ip</code>
+	address with the machine on which the above is running's <code>ip</code>
+	address.
+</p>
+<p>
+	It is in fact possible to connect multiple listening instances of
+	<code>netcat</code> to the port (in this case <code>8080</code>) 
+	from either the same or from different machines. You can do this
+	by running <code>nc 127.0.0.1 8080</code> on the same machine
+	with different terminal emulators or a terminal multiplexer like
+	<code>screen</code> or <code>tmux</code>. In order to confirm that
+	all the lines being written out on the port (that is why <code>xxd</code>
+	was used to produce human identifyable output), you can limit the
+	rate at which the lines are produced with the following alteration 
+	to the line producer invocation
+</p>
+<pre><code class="language-bash">cat /dev/urandom|xxd|pv -L 32|nc -l 8080</code></pre>
+<p>
+	The <code>pv</code> utility, which you can install from your distro's
+	repository or build from source, is a command that can be used to
+	monitor the rate at which data is being transferred, but it also has the
+	feature of limiting the rate at which data goes out of it with the
+	<code>-L</code> flag followed by an integer value representing the
+	amount of bytes per second that will be returned from its <code>stdout</code>.
+	By combining it into the invocation we can clamp the output. <code>32</code>
+	bytes per second is slow enough for you to confirm on your listening 
+	<code>nc</code> invocations output visually that the lines do indeed 
+	match up, confirming that all lines are read by all listening instances
+	and that none are skipped.
+</p>
+<p>
+	This can kind of serve as a tool if you want to serve up arbitrary
+	data for testing other things, and also to learn a bit more about
+	how this sort of things works fundamentally.
+</p>
+<p>
+	Below is a little video demonstration
+</p>
+<script>
+	Prism.highlightAll()
+</script>

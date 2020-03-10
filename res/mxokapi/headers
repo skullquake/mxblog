@@ -1,0 +1,5 @@
+accept: application/json
+title: Mx Okapi Barcodes 
+status: publish
+type: Post
+image: mendix.png

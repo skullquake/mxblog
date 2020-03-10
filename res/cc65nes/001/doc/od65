@@ -1,0 +1,20 @@
+Usage: od65 [options] file [options] [file]
+Short options:
+  -h			Help (this text)
+  -H			Dump the object file header
+  -S			Dump segments sizes
+  -V			Print the version number and exit
+
+Long options:
+  --dump-all		Dump all object file information
+  --dump-dbgsyms	Dump debug symbols
+  --dump-exports	Dump exported symbols
+  --dump-files		Dump the source files
+  --dump-header		Dump the object file header
+  --dump-imports	Dump imported symbols
+  --dump-lineinfo	Dump line information
+  --dump-options	Dump object file options
+  --dump-segments	Dump the segments in the file
+  --dump-segsize	Dump segments sizes
+  --help		Help (this text)
+  --version		Print the version number and exit

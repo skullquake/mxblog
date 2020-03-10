@@ -1,0 +1,5 @@
+accept: application/json
+title: msys2: setup dev env
+status: publish
+type: Post
+image: unix.png

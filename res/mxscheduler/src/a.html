@@ -1,0 +1,86 @@
+<p>
+	Let's take a look at implementing a dynamic scheduling system
+	for Mendix. The subject of scheduling is quite extensive, but
+	all we're interested in initially is to get some form of control
+	over scheduled events in Mendix. MBM side, there are some quick
+	click features in the modeler to set up scheduled events, but these
+	are static, i.e. once they're set up theres not much you can do afterwards.
+	Using the vinalla features provided, if you want to exercise more control,
+	you have to set up lots of extra tables, pollers, and microflows.
+</p>
+<p>
+	Using <code>java</code> <code>Runnables</code>,
+	<code>ScheduledThreadPoolExecutors</code> and <code>HashMaps</code>, a few front
+	end interfaces, and minimal tables, you can set up a scheduling system whereby
+	you can choose any Microflow to execute at a fixed or periodic intervals
+	in a controlled fashion as well as control the schedules. The database
+	tables are purely for front end interaction and are all nonpersitent.
+</p>
+<p>
+	The first step is to set up a Java Action with a static <code>HashMap</code>
+</p>
+<pre><code class="language-java">...
+private static java.util.LinkedHashMap&lt;
+	java.lang.String,
+	java.lang.Object
+&gt; hashmap=new java.util.LinkedHashMap&lt;
+	java.lang.String,
+	java.lang.Object
+&gt;();
+...</code></pre>
+<p>
+	This will be used to store
+	<code>java.util.concurrent.ScheduledThreadPoolExecutor</code> instances,
+	which we can then retrieve at some later point for control,
+	like rescheduling or cancellation, as well as for populating our
+	nonpersistent entities for our front end interface. The <code>key</code> is a
+	<code>java.lang.String</code> which you can populate for unique identification
+	purposes, for example the name of the Microflow followed by a <code>uuid</code>.
+	Alternatively you can use a tuple with the microflow name and <code>uuid</code>.
+</p>
+<p>
+	The <code>HashMap</code> will be used in more than one Java Action, so
+	we'll implement it in a seperate class, and include that as member in those
+	actions. The actions involved will be for <i>creating</i>, <i>manipulating</i>,
+	and <i>listing all</i> schedules. With those three actions we will be able
+	to manipulate scheduled execution to a great enough extent for it to be usable.
+</p>
+<p>
+	In order to create a schedule for a Microflow, we'll pass in two parameters,
+	the fully qualified name of the Microflow, and a cron string. If you've worked
+	in <code>*nix</code> you might be familiar with the syntax for <code>cron</code>,
+	which is a scheduling tool that comes standard on <code>*nix</code>..
+</p>
+<p>
+	Very is involved in this general purpose <code>Schedule</code> class, and
+	it should in fact be named somthing different, at is so general purpose
+	that it can be reused for lots of things
+</p>
+<pre><code class="language-javascript">package mxutil;
+public class Schedule{
+	public Schedule(){}
+	public java.util.LinkedHashMap&lt;
+		java.lang.String,
+		java.lang.Object
+	&gt; getSchedule(){
+		return hashmap;
+	}
+	public static java.util.LinkedHashMap&lt;
+		java.lang.String,
+		java.lang.Object
+	&gt; hashmap=new java.util.LinkedHashMap&lt;
+		java.lang.String,
+		java.lang.Object
+	&gt;();
+}</code></pre>
+<p>
+	Before we get started with the scheduling itself, in order to make setting up
+	schedules easier, we need a way of parsing the <code>cron</code> strings.
+	We can use <a href="https://github.com/jmrozanec/cron-utils">jmrozanec/cron-utils</a>
+	for this, which you can find as a prebuilt jar at Maven, however
+	<code>org.springframework</code> has <code>org.springframework.scheduling.concurrent.ThreadPoolTaskSchduler</code> and <code>org.springframework.scheduling.support.Crontrigger</code>
+	that really works very nicely together to set up you <code>cron</code> jobs.
+</p>
+<script>
+	Prism.highlightAll()
+</script>

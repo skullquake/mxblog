@@ -1,0 +1,677 @@
+<p>
+	Let's take a look at building a Mendix
+	<i>native</i> application. This is a bit misleading,
+	as it is not really a native application. All it is
+	is a webframe in a native application. This concept,
+	however, does provide native functionality exposure
+	to the webframe, <i>i.e.</i> the webframe's javascript
+	engine may be provided with native functionality via
+	a <i>bridging</i> mechanism provided by the native
+	application which will then expose native code
+	to the js engine.
+</p>
+<p>
+	Many languages have libraries or builtings allowing you to run
+	a scripting language like <code>lua</code>, <code>python</code>
+	<code>javascript</code>. For example in <code>c</code> you can
+	use <code>DukTape</code> to run <code>js</code> code
+	and exposed to the scripting langauge native <code>c</code>
+	functions, for example <code>sqlite</code> functions that
+	allows you to manipulate an <code>sqlite</code> database.
+	In the end when everything is set up, you can run your scripts
+	which are just strings from some source, e.g. files on a
+	file system, from a socket connection, or programatically
+	generated within a <code>js</code> <i>context</i>
+	created that then does whatever it does, potentially calling
+	the exposed functions.
+</p>
+<p>
+	<code>Phonegap</code>/<code>Cordova</code> is similar
+	in this respect in that there is provided a mechanism
+	to expose native <code>Java</code> functionality
+	to <code>javascript</code>, which here runs in the 
+	webframe of the application, and a mechanism of calling the
+	exposed functionality.
+</p>
+<p>
+	Let's start by setting up <code>Cordova</code>
+	on <code>*nix</code>, first without Mendix own 
+	it's own, for what is served in the webframe
+	of a Cordova application are just
+	normal web assets coming from either the application
+	itself or some web server.
+</p>
+<h3>
+	Installation
+</h3>
+<p>
+	The following things need to be set up
+</p>
+<ul>
+	<li>
+		<code>git</code>
+	</li>
+	<li>
+		<code>nodejs</code>
+	</li>
+	<li>
+		<code>phonegap/cordova</code>
+	</li>
+	<li>
+		<code>ant</code>
+	</li>
+</ul>
+<p>
+	First install <code>git</code>
+</p>
+<pre><code class="language-bash">sudo apt-get install git</code></pre>
+<p>
+	Next install <code>node</code>
+</p>
+<pre><code class="language-bash">sudo apt-get install node</code></pre>
+<p>
+	Then install <code>phonegap</code>/<code>cordova</code>
+</p>
+<pre><code class="language-bash">npm install -g phonegap</code></pre>
+<pre><code class="language-bash">npm install -g cordova</code></pre>
+<p>
+	You can check your Cordova version with the following
+</p>
+<pre><code class="language-bash">cordova -v
+9.0.0 (cordova-lib@9.0.1)</code></pre>
+<p>
+	After that, install <code>ant</code>
+</p>
+<pre><code class="language-bash">sudo apt-get install ant</code></pre>
+<p>
+	We also need the <code>jdk</code>
+</p>
+<pre><code class="language-bash">sudo apt-get install openjdk-7-jre
+sudo apt-get install openjdk-8-jdk</code></pre>
+<p>
+	We also need to get the Android SDK, which you can get 
+	<a href="http://developer.android.com/sdk/index.html">here</a>. 
+	Verify your Android SDK installation as follows
+</p>
+<pre><code class="language-bash">cd ~/Android/Sdk/tools
+./android list target</code></pre>
+<p>
+	This should print out something like the following
+</p>
+<pre><code class="language-bash">id: 1 or "android-28"
+	Name: Android API 28
+	Type: Platform
+	API level: 28
+	Revision: 6</code></pre>
+<p>
+	If you are using <code>open-jdk</code> you might run into the following error:
+</p>
+<pre><code class="language-bash">java.lang.NoClassDefFoundError: javax/xml/bind/annotation/XmlSchema</code></pre>
+<p>
+	This can be fixed with the following, which you can add to your
+	<code>.profile</code> if you want to
+</p>
+<pre><code class="language-bash">export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'</code></pre>
+<p>
+	You might run into several issue like this, try and resolve
+	them by doing a web search
+</p>
+<p>
+	After installing the Android SDK, you need to 
+	edit your environment as follows:
+</p>
+<pre><code class="language-bash">...
+export ANDROID_HOME="$HOME/Android/Sdk"
+export JAVA_OPTS='-XX:+IgnoreUnrecognizedVMOptions'
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/tools:$ANDROID_HOME/build-tools:$PATH"</code></pre>
+<p>
+	The paths depend on where you installed you Android SDK.
+	If you installed it in <code>/usr/share</code> for example,
+	you need to adjust your paths accordingly. It is also
+	important to note the use of the <code>$HOME</code> variable.
+	This points to an absolute path which is your home directory,
+	and using <code>~</code> or relative paths when specifying
+	these environmental variables should be avoided as it
+	will lead to errors when Cordova attempts to use those
+	paths. For the changes to reflect after modifying your 
+	<code>.profile</code> you can either log out and then
+	log back in, or execute the following
+</p>
+<pre><code class="language-bash">. ~/.profile</code></pre>
+<p>
+	<code>.</code> is a builtin for <code>bash</code>
+	<code>source</code>, so you can also execute the following
+	as an alternative to the above
+</p>
+<pre><code class="language-bash">source ~/.profile</code></pre>
+<h3>
+	Create a Sample Project
+</h3>
+<p>
+	With everything installed and working, we can create
+	a simple test project in order to confirm that
+	all is working.
+</p>
+<pre><code class="language-bash">mkdir -p ~/dev/cordova
+cd ~/dev/cordova
+cordova create test</code></pre>
+<p>
+	This will create a source tree for your <code>cordova</code>
+	project at <code>~/dev/cordova/test</code> has the following folder structure
+</p>
+<pre><code class="language-bash">./
+├── a.txt
+├── config.xml
+├── hooks
+│   └── README.md
+├── package.json
+├── platforms
+├── plugins
+└── www
+    ├── css
+    │   └── index.css
+    ├── img
+    │   └── logo.png
+    ├── index.html
+    └── js
+        └── index.js</code></pre>
+<p>
+	We'll take a look at these files a bit later. <code>cordova</code>
+	is a <code>nodejs</code> script that is used to scaffold
+	and manage a <code>cordova</code> project. It has numerous
+	options and you can find out more by running <code>cordova --help</code>
+</p>
+<p>
+	The first thing you want to do is add a <code>platform</code>.
+	To see what platforms are available you can use the following
+</p>
+<pre><code class="language-bash">cordova platform list</code></pre>
+<p>
+	This will provide a list of available platform, for example
+</p>
+<pre><code class="language-bash">Installed platforms:
+
+Available platforms:
+	android ^8.0.0
+	borwser ^6.0.0
+	electron ^1.0.0
+	ios ^5.0.0
+	osx ^5.0.0
+	windows ^7.0.0</code></pre>
+<p>
+	As you can see, for this project, no platforms are
+	installed as yet, let's go ahead and install a platform
+</p>
+<pre><code class="language-bash">cordova platform add android@8.0.0</code></pre>
+<p>
+	This will print some specifics as follows
+</p>
+<pre><code class="language-bash">Using cordova-fetch for cordova-android@8.0.0
+Adding android project...
+Creating Cordova project for the Android platform:
+	Path: platforms/android
+	Package: io.cordova.hellocordova
+	Name: HelloCordova
+	Activity: MainActivity
+	Android target: android-28
+Subproject Path: CordovaLib
+Subproject Path: app
+Android project created with cordova-android@8.0.0
+Plugin 'cordova-plugin-whitelist' found in config.xml... Migrating it to package.json
+Discovered saved plugin "cordova-plugin-whitelist". Adding it to the project
+Installing "cordova-plugin-whitelist" for android
+Adding cordova-plugin-whitelist to package.json</code></pre>
+<p>
+	You can check to see if your system meets the requirements
+	to build the target using the following command
+</p>
+<pre><code class="language-bash">cordova requirements</code></pre>
+<p>
+	This should print out something like the following if
+	all requirements were met
+</p>
+<pre><code class="language-bash">Requirements check results for android:
+Java JDK: installed 1.8.0
+Android SDK: installed true
+Android target: installed true
+Gradle: installed /usr/share/gradle/bin/gradle</code></pre>
+<p>
+	If we take a look at what was added to the source tree,
+	we'll find that a <code>./platforms/android/</code> folder
+	was populated which contains numerous <code>.java</code>
+	source files, some <code>gradle</code> build scripts, and
+	some other files.
+</p>
+<p>
+	We can now try and build the project with the following
+</p>
+<pre><code class="language-bash">cordova build android</code></pre>
+<p>
+	If you run into errors regarding the <code>jdk</code> version,
+	ensure that <code>JAVA_HOME</code> is set to the correct
+	<code>jdk</code> version, and also that your <code>PATH</code>
+	environmental variable scans the directory of your chosen
+	<code>jdk</code> prior to other paths, for example
+</p>
+<pre><code class="language-bash">...
+export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+PATH="$JAVA_HOME/bin:...:$PATH</code></pre>
+<p>
+	<code>cordova</code> does not seem to propperly utilize
+	the <code>JAVA_HOME</code> variable to point to it's implied 
+	<code>javac</code> compiler, thus manipulating the 
+	<code>PATH</code> in this way should remedy the situation.
+	Errors like these are numerous and dependent on your
+	operating system configuration. Again, search the
+	net for solutions, as all of this is very configuration 
+	specific.
+</p>
+<p>
+	If <code>gradle</code> failed to build with
+	<code>No installed build tools found. Install the Android
+	build tools version 19.1.0 or higher</code> you can try to 
+	install the build tools using <code>sdkmanager</code>,
+	which is located in the Android Sdk <code>bin</code>
+	directory. First list the packages using the following
+</p>
+<pre><code class="language-bash">sdkmanager --list</code></pre>
+<p>
+	Listed will be various packages, including
+	<code>build-tools</code> and <code>platforms</code>.
+	You can for example install <code>platform-tools</code>
+	and <code>platforms;android-26</code> using the following
+</p>
+<pre><code class="language-bash">sdkmanager "platform-tools" "platforms;android-26"</code></pre>
+<p>
+	In my specific case the error involved <code>build-tools</code>
+	<code>19.1.0</code>. Inspecting the output of
+	<code>sdkmanager --list</code> reveals that the relevant package
+	is <code>build-tools;19.1.0</code>, so you can install that as
+	follows
+</p>
+<pre><code class="language-bash">sdkmanager "build-tools;19.1.0"</code></pre>
+<p>
+	The <code>sdkmanager</code> is a commnd line tool allowing
+	you to view, install, update, as well as uninstall packages for
+	the Android SDK. Usually when you use Android Studio, this is
+	done from the IDE, <code>sdkmanager</code> is the command line
+	version of that. After having executed the above, in your
+	Android SDK deployment directory you should find under
+	<code>platforms</code> a new directory <code>android-26</code>
+	containing all the platform artifacts.
+</p>
+<p>
+	If all went well, you should see <code>gradle</code> fire up
+	to build your project. <code>gradle</code> is an open-source
+	build automation system based on concepts from <code>ant</code>
+	and <code>maven</code>
+</p>
+<pre><code class="language-javascript">...
+BUILD SUCCESSFUL in 2m 5s
+42 actionable tasks: 42 executed
+Built the following apk(s): 
+	/home/ockert/dev/cordova/test/platforms/android/app/build/outputs/apk/debug/app-debug.apk</code></pre>
+<h3>
+	Testing the APK
+</h3>
+<p>
+	The <code>apk</code> produced in the build process can now
+	be tested on an android device. In order to do so you can
+	connect your device to your machine with a USB cable and
+	transfer the <code>apk</code> to it for testing.
+</p>
+<p>
+	In order to do so you need to enable the developer settings
+	on the device, a quick search on the Internet will describe
+	how to do that.
+</p>
+<p>
+	To determine if the device is propperly connected to the machine
+	we can use <code>adb</code>. You don't need the Android SDK for
+	this, as it should be available in the standard repositories
+	of your <code>*nix</code> distribution. You can install it as
+	follows
+</p>
+<pre><code class="language-javascript">sudo apt-get install adb</code></pre>
+<p>
+	Run the following to see if your connected device is visible
+</p>
+<pre><code class="language-javascript">adb devices</code></pre>
+<p>
+	If the devices is visible it should print out something
+	like the following
+</p>
+<pre><code class="language-javascript">List of devices attached
+0715f7b1d924273a	device</code></pre>
+<p>
+	Proper connection of an Android device is often problematic
+	and again you will find that searching on the net will
+	provide solutions to problems that you might encounter.
+</p>
+<p>
+	You can run your Cordova project on your device now with the following
+</p>
+<pre><code class="language-bash">cordova run android</code></pre>
+<p>
+	This should transfer and start the application on the connected
+	device. The application should open automatically on the device
+	and the Cordova hello world page should be presented. This
+	shows that the application is working, and additionally
+	it attempts to call a test function that shows that the
+	JS/Native bridge part is working. This will be indicated
+	on the screen the <i>DEVICE IS READY</i> dom node.
+</p>
+<h3>
+	Manipulating HTML/JS
+</h3>
+<p>
+	The web assets are stored at <code>./www</code> in your
+	project and you are free to manipulate these assets
+	and redeploy to the device using
+	<code>cordova run android</code>. Of interest are the
+	<code>&lt;script&gt;</code> tags at the bottom of
+	<code>index.html</code>. If you search <code>./www</code>
+	for <code>cordova.js</code> you will see it is not to be
+	found in the web assets folder. <code>cordova.js</code>
+	is a JavaScript source tailored to the target platform,
+	in this case Android, and will be located under the
+	<code>platforms</code> directory in the Cordova project
+	source tree.
+</p>
+<p>
+	If you take a look at <code>./www/js/index.js</code>
+	you'll find that this is the main application javascript 
+	source that calls the JS bridge code. There is an
+	<code>app</code> object that waits for a nativce code
+	event called <code>deviceready</code> and then goes on to
+	manipulate the DOM.
+</p>
+<h3>
+	Adding a Plugin
+</h3>
+<p>
+	Plugins are implementations exposing native platform code
+	to the JS bridge mechanism to be consumed by the webframe
+	JavaScript code. The <code>cordova.exec</code> method is used
+	to marshal the requests from the WebView to the Platform
+	native code. In your Cordova project source tree plugins
+	will be placed in the <code>./plugins</code> directory and
+	listed in a platform specfic <code>json</code> file, for example
+	<code>plugins/android.json</code> under the
+	<code>installed_plugins</code> key.
+</p>
+<pre><code class="language-javascript">{
+	"prepare_queue":{
+		"installed"[],
+		"uninstalled":[],
+	},
+	"config_munge":{
+		"files":{}
+	},
+	"installed_plugins":{
+		"cordova-plugin-whitelist":{
+			"PACKAGE_NAME":"io.cordova.hellocordova"
+		}
+	},
+	"dependent_plugins":{}
+}</code></pre>
+<p>
+	Plugins can be managed with the <code>cordova</code> command.
+	<code>cordova plugin</code> has various options, and you can
+	find out more of them with the following invocation
+</p>
+<pre><code class="language-bash">cordova help plugin</code></pre>
+<p>
+	There exists a central repository for Cordova plugins
+	at <a href="https://cordova.apache.org/plugins">cordova.apache.org/plugins</a>. Plugins can also be downloaded from GitHub repositories.
+	To install a plugin you can use the following
+</p>
+<pre><code class="language-bash">cordova plugin install cordova-plugin-console</code></pre>
+<p>
+	Debugging is important and for that we use the console plugin.
+	This will enable to see the JavaScript log in the device
+	<code>logcat</code> logs. In order to test this out, first
+	edit <code>./www/index.html</code> and comment out the following
+	line
+</p>
+<pre><code class="language-html">&lt; meta http-equiv="Content-Security-Policy" content="default-src" ...</code></pre>
+<p>
+	With this line commented out you can add <code>onclick</code>
+	attributes to elements for testing. Now add a button
+	in <code>index.html</code> as follows.
+</p>
+<pre><code class="language-html">&lt;button onclick="console.log('test')"&gt;test&lt;/button&gt;</code></pre>
+<p>
+	Redeploy the application using <code>cordova run android</code>
+	and open shell to the device with <code>adb shell</code>. You can
+	now filter the device logs as follows
+</p>
+<pre><code class="language-bash">logcat|grep chromium|grep CONSOLE</code></pre>
+<p>
+	If you click the button and observe the logs, the following
+	relevant line should be printed
+</p>
+<pre><code class="language-bash">XX-XX XX:XX:XX.XXX XXXXX XXXXX I chromium: [INFO:CONSOLE(40)] "test", source: file:///android_asset/www/index.html (40)</code></pre>
+<p>
+	Thus we have a way of debugging JavaScript code of a Cordova
+	application. Let's move on to install a plugin and debug
+	it via inspection of the <code>logcat</code>. We will
+	install the popular GeoLocation plugin
+</p>
+<pre><code class="language-bash">cordova plugin add cordova-plugin-geolocation</code></pre>
+<p>
+	To list the installed plugins use the following
+</p>
+<pre><code class="language-bash">cordova plugin list</code></pre>
+<p>
+	At this point it should return the following
+</p>
+<pre><code class="language-bash">cordova-plugin-console 1.1.0 "Console"
+cordova-plugin-geolocation 4.0.2 "Geolocation"
+cordova-plugin-whitelist 1.3.4 "Whitelist"</code></pre>
+<p>
+	To test the GeoLocation plugin we will add a button
+	with an <code>onclick</code> event executing a function
+	that will retrieve the device coordinates using the GeoLocation
+	plugin and print it to the console
+</p>
+<pre><code class="language-html">&lt;button onclick="geotest()"&gt;geotest&gt;/button&gt;
+&lt;script&gt;
+	function getPosition(){
+		var options = {
+			enableHighAccuracy:true,
+			maximumAge:3600000
+		}
+		var watchID=navigator.geolocation.getCurrentPosition(onSuccess,onError,options);
+		function onSuccess(position){
+			console.log(position.coords.latitude)
+			console.log(position.coords.longitude)
+			console.log(position.coords.altitude)
+			console.log(position.coords.heading)
+			console.log(position.coords.speed)
+			console.log(position.coords.timestamp)
+		};
+		function onError(error){
+			console.error(error);
+		}
+	}
+&lt;/script&gt;</code></pre>
+<p>
+	You can now redeploy the application using <code>cordova run android</code>,
+	shell into the device, grep <code>logcat</code>, click the
+	test button, and observe the logs. The device coordinates 
+	should be printed to the console
+</p>
+<h3>
+	Creating a Custom Plugin
+</h3>
+<p>
+	There exists various plugins apart from GeoLocation.
+	The GeoLocation plugin is a little mundane as that feature
+	is already available in modern browsers anyways. Before
+	looking at some other interesting plugins, let's take a look
+	at creating our own plugins in order to showcase how we can
+	create features that normal browsers would not normally be able
+	to provide.
+</p>
+<p>
+	To create plugins there exists a <code>node</code> utility program 
+	called <code>plugman</code> that helps you scaffold the code necessary for 
+	a Cordova plugin. Install it as follows
+</p>
+<pre><code class="language-bash">npm install -g plugman</code></pre>
+<p>
+	We are interested in the <code>create</code> flag that allows us to create
+	a plugin. We will execute <code>plugman create</code> in its own seperate
+	source directory.
+</p>
+<pre><code class="language-bash">mkdir -p ~/dev/cordovaplugins
+cd ~/dev/cordovaplugins
+plugman \
+	create \
+	--name myplugin\
+	--plugin_id myplugin \
+	--plugin_version 0.0.1</code></pre>
+<p>
+	This will scaffold the following
+</p>
+<pre><code class="language-bash">.
+├── plugin.xml
+├── src
+└── www
+    └── myplugin.js</code></pre>
+<p>
+	The next step is to add the platform, in our case Android, to scaffold some more
+	platform specific code for us.
+</p>
+<pre><code class="language-bash">plugman platform add --platform_name android</code></pre>
+<p>
+	The source tree should now look something like
+	this
+</p>
+<pre><code class="language-bash">.
+├── plugin.xml
+├── src
+│   └── android
+│       └── myplugin.java
+└── www
+    └── myplugin.js</code></pre>
+<p>
+	The plugin source directory contains <code>plugin.xml</code>. We also need
+	to create <code>package.json</code>, which is a secondary step performed afterwards.
+	You can use the following to do so
+</p>
+<pre><code class="language-bash">plugman createpackagejson .</code></pre>
+<p>
+	It will prompt you for some user input, you can just fill in the defaults. Since
+	the plugin is contained in its own seperate source tree, we need to install it
+	to our actual Cordova, and we can accomplish that by executing the following
+	from our Cordova application source tree
+</p>
+<pre><code class="language-bash">plugman \
+	install\
+	--platform android\
+	--project platforms/android\
+	--plugin\
+	~/dev/cordovaplugins/myplugin</code></pre>
+<p>
+	In order to remove a custom plugin, the following will be used in the Cordova
+	project source tree
+</p>
+<pre><code class="language-bash">plugman \
+	uninstall\
+	--platform android\
+	--project platforms/android\
+	--plugin\
+	myplugin</code></pre>
+<p>
+	Whereas <code>install</code> refers to a path to a plugin,
+	<code>uninstall</code> refers to a <i>name</i> of a plugin.
+	When developing Cordova plugins, you edit the source code of the plugin in its
+	own source tree, and then use <code>plugman</code> <code>install</code> to deploy
+	the code to your Cordova project. Consecutive execution of this deployment
+	operation requires the execution of a <code>plugman</code> <code>uninstall</code> 
+	invocation to clear the Cordova project source tree of the previous version of
+	the plugin deployed by <code>plugman</code>. Alternatively you can use <code>cordova</code>
+	to link to your plugin as follows
+</p>
+<pre><code class="language-bash">cordova \
+	plugin \
+	add \
+	--link ~/dev/cordovaplugins/myplugin</code></pre>
+<p>
+	The above will create a <code>symlink</code> to your plugin source directory
+</p>
+<p>
+	To make things easier you can put these commands into shell scripts,
+	e.g. <code>plugadd</code> and <code>plugrem</code> respectively, as you will
+	probably be performing these operations many times.
+</p>
+<p>
+	Let's take a look at <code>myplugin.js</code> and <code>MyPlugin.java</code>
+	that <code>plugman</code> created during the scaffolding process.
+</p>
+<pre><code class="language-javascript">var exec = require('cordova/exec');
+exports.coolMethod = function (arg0, success, error) {
+	exec(success, error, 'myplugin', 'coolMethod', [arg0]);
+};</code></pre>
+<p>
+	<code>./www/myplugin.js</code> is the JavaScript interface
+	to <code>./src/android/MyPlugin.java</code>. It exports a function
+	to use in our Cordova <code>js</code> that uses <code>cordova.exec</code> to invoke
+	our native function contained in <code>myplugin.java</code>.
+</p>
+<pre><code class="language-java">package myplugin;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CallbackContext;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+/**
+ * This class echoes a string called from JavaScript.
+ */
+public class myplugin extends CordovaPlugin {
+@Override
+public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+	if (action.equals("coolMethod")) {
+		String message = args.getString(0);
+		this.coolMethod(message, callbackContext);
+		return true;
+	}
+	return false;
+}
+	private void coolMethod(String message, CallbackContext callbackContext) {
+		if (message != null &amp;&amp; message.length() &gt; 0) {
+			callbackContext.success(message);
+		} else {
+			callbackContext.error("Expected one non-empty string argument.");
+		}
+	}
+}</code></pre>
+<p>
+	As you can see in the above code, <code>coolMethod</code> takes two arguments,
+	<code>java.lang.String</code> and <code>org.apache.cordova.CallbackContext</code>.
+	The <code>String</code> argument is specific to our plugin's logic, and the
+	<code>CallbackContext</code> is general to all plugins.
+</p>
+<p>
+	If you now go to your Cordova project source directory and run <code>cordova build android</code>
+	with our plugin added, you will find that
+	<code>./platforms/android/app/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes/myplugin/myplugin.class</code>
+	has been compiled for us. We can test it in our webframe <code>js</code> as follows
+</p>
+<pre><code class="language-javascript">&lt;button onclick="myplugintest()"&gt;myplugintest&lt;/button&gt;
+...
+&lt;script&gt;
+function myplugintest(){
+	console.log(coolMethod('test'));
+}
+&lt;/script&gt;</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+<pre><code class="language-javascript"></code></pre>
+
+
+

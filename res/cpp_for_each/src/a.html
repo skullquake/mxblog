@@ -1,0 +1,68 @@
+<p><code>std::for_each</code> applies a given function object to the result, dereferencing each iterator in the specified range.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+void inc(int&amp; a){
+	++a;
+}
+void dec(int&amp; a){
+	--a;
+}
+int main(int argc,char** argv){
+	std::vector&lt;int&gt; v={0,1,2,3};
+	for(auto a:v){
+		std::cout&lt;&lt;a&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	std::for_each(v.begin(),v.end(),inc);
+	for(auto a:v){
+		std::cout&lt;&lt;a&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	std::for_each(v.begin(),v.end(),dec);
+	for(auto a:v){
+		std::cout&lt;&lt;a&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	return 0;
+}</code></pre>
+<p>Here the same, using <i>lambdas</i></p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+int main(int argc,char** argv){
+	std::vector&lt;int&gt; v={0,1,2,3};
+	for(auto a:v){
+		std::cout&lt;&lt;a&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	std::for_each(v.begin(),v.end(),[](int&amp; a){
+		a++;
+	});
+	for(auto a:v){
+		std::cout&lt;&lt;a&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	std::for_each(v.begin(),v.end(),[](int&amp; a){
+		a--;
+	});
+	for(auto a:v){
+		std::cout&lt;&lt;a&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	return 0;
+}</code></pre>
+<p>You dont have to change the elements being iterated, for example</p>
+<pre><code class="language-javascript">std::for_each(v.begin(),v.end(),[](int&amp; a){
+	std::cout&lt;&lt;a&lt;&lt;std::endl;
+});</code></pre>
+<p>You can also use capturing lambdas to manipulate other containers</p>
+<pre><code class="language-javascript">std::vector&lt;int&gt; v2;
+std::for_each(v.begin(),v.end(),[&amp;](int&amp; a){
+	v2.push_back(a*2);
+});
+for(auto a:v2){
+	std::cout&lt;&lt;a&lt;&lt;" "&lt;&lt;std::endl;
+}
+std::cout&lt;&lt;std::endl;</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

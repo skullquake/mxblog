@@ -1,0 +1,246 @@
+<p>Let's take a look at creating functions in <code>PostgreSQL</code></p>
+<h3>Samples</h3>
+<pre><code class="language-javascript">drop function if exists fn_test();
+create or replace function fn_test()
+    returns int as $$
+begin
+    return 1234;
+end; $$
+language plpgsql;
+select fn_test();</code></pre>
+<p>In the above, for testing purposes,  we drop <code>fn_test</code> if it exists in order to be able to redefine it's signature and return type. We <code>create or replace</code> <code>fn_test</code> that takes no arguments and returns <code>int</code>. It is necessary to set the language using <code>language plpgsql</code>. Then we call the function with <code>select fn_test();</code></p>
+<p>Let's take a look at arguments.</p>
+<pre><code class="language-javascript">drop function if exists fn_test();
+language plpgsql;
+create or replace function fn_test(a varchar,b varchar)
+    returns varchar as $$
+begin
+    return a||b;
+end; $$
+select fn_test($esc$'foo'$esc$,$esc$'bar'$esc$);</code></pre>
+<p>Here we set the return type to <code>varchar</code> and return the concatenation of <code>a</code> and <code>b</code>. Single quotes are escaped using sets of <code>$TOKEN$</code>. You can define default values as follows</p>
+<pre><code class="language-javascript">drop function if exists fn_test();,
+create or replace function fn_test(a varchar=$esc$'foo'$esc$)
+    returns varchar as $$
+begin
+    return a;
+end; $$
+language plpgsql;
+select fn_test();</code></pre>
+<p>In the above no argument was given in the call to <code>fn_test</code>, so the default value of <code>'foo"</code> was used. Let's take a look at rurning something akin to a row by defining a <code>type</code> and returning it our function as follows</p>
+<pre><code class="language-javascript">drop type if exists t_test;
+create type t_test as(
+    m0 int,
+    m1 int
+);,
+drop function if exists fn_test();,
+create or replace function fn_test()
+    returns t_test as $$
+declare
+    ret t_test;
+begin
+    ret.m0=1234;
+    ret.m1=4321,
+    return ret;
+end; $$
+select fn_test();</code></pre>
+<p>In the above we define a <code>type</code> with two members of type <code>int</code> then define a function that rerturns that type. There does exist a propper <code>table</code> type that you can return, as illustrated in the following</p>
+<pre><code class="language-javascript">drop function if exists fn_foo();
+create or replace function fn_foo()
+    returns table(
+        m0 int,
+        m1 int
+    )
+as $$
+begin
+    return query select 0 as m0,1 as m1;
+end; $$
+language plpgsql;
+select * from fn_foo();</code></pre>
+<p>In the above, <code>fn_foo</code> returns a table with fields <code>m0</code> and <code>m1</code> of type <code>int</code>. In the function body we return <code>query select 0 as m0,1 as m1</code> taking note of the field types and names. Let's take a look at using arrays. Multipi dimensional arrays are supported, and here we populate a two dimensional array. We also create a temp table and populate it from the array, then return a selection from the temp table.</p>
+<pre><code class="language-javascript">drop function if exists fn_fib();
+create or replace function fn_fib(n int)
+    returns table(
+        m0 int,
+        m1 int
+    )
+as $$
+declare
+    m0 int;
+    m1 int;
+    arr int[][];
+    idx int:=0;
+    prv int:=0;
+    cur int:=1;
+    nxt int;
+begin
+    -- return table;
+    create temp table ret(
+        m0 int,
+        m1 int
+    ) on commit drop;
+    -- dimension array;
+    arr=array_fill(0,array[0,2]);
+    -- populate array;
+    idx=0;
+    LOOP
+        EXIT WHEN idx=n;
+        -- arr=arr||idx;
+        nxt=prv+cur;
+        prv=cur;
+        cur=nxt;
+        arr=arr||array[[idx,nxt]];
+        idx=idx+1;
+    END LOOP;
+    idx=0;
+    LOOP
+        EXIT WHEN idx=array_length(arr,1);
+        insert into ret(m0,m1)values(arr[idx+1][1],arr[idx+1][2]);
+        idx=idx+1;
+    END LOOP;
+    return query select * from ret;
+end; $$
+language plpgsql;
+select * from fn_fib(8);</code></pre>
+<p>There also exists the <code>record</code> type which you can use to return tabular data</p>
+
+<pre><code class="language-javascript">
+drop function if exists fn_foo();
+create or replace function fn_foo()
+    returns table(
+        m0 int,
+        m1 int
+    )
+as $$
+declare
+    r   record;
+begin
+    arr:=array[1,2];
+    return query
+        select
+            arr[1] as m0,
+            arr[2] as m0
+    ;
+end; $$
+language plpgsql;
+select * from fn_foo();</code></pre>
+<p>Here we return a <code>table</code> but do so by returning a single <code>record</code>. Let's take a look at working with multiple <code>record</code>s. Instead of using a temporary table as before, here we use a <code>record</code> member in a <code>loop</code></p>
+<pre><code class="language-javascript">drop function if exists fn_foo();
+create or replace function fn_foo()
+    returns table(
+        m0 int,
+        m1 int
+    )
+as $$
+declare
+    i   int:=0;
+    j   int:=8;
+    r   record;
+begin
+    loop
+        exit when i=8;
+        m0:=i;
+        m1:=i*10;
+        return next;
+        i=i+1;
+    end loop;
+    return;
+end; $$
+language plpgsql;
+select * from fn_foo();</code></pre>
+<p>Let's take a look at <code>in</code>, <code>out</code>, and <code>inout</code> parameters. The default parameter you send in is an <code>in</code> (<i>input</i>) parameter. You can also declare an argument as an <code>out</code> (<i>output</i>) parameter. You can then assign values to these and the result of calling the function will be the output parameters. For example, in the following we have a simple test function that has two output parameters that are set to hard coded values</p>
+<pre><code class="language-javascript">drop function if exists fn_klutz();
+create or replace function fn_klutz(
+    out a numeric,
+    out b numeric
+)
+as $$
+declare
+begin
+    a:=0;
+    b:=1;
+end; $$
+language plpgsql;
+select * from fn_klutz();</code></pre>
+<p>The output is as follows</p>
+<pre><code class="language-javascript">a,b
+---
+0,1</code></pre>
+<p>The <code>inout</code> parameters allows you to do both input as well as output.</p>
+
+<pre><code class="language-javascript">drop function if exists fn_foobar();
+create or replace function fn_foobar(
+    inout a numeric,
+    inout b numeric
+)
+as $$
+declare
+begin
+    a:=a*10;
+    b:=b*100;
+end; $$
+language plpgsql;
+select * from fn_foobar(1,2);</code></pre>
+<p>The following output is reported</p>
+<pre><code class="language-javascript">a,b
+---
+10,100</code></pre>
+<p><code>VARARGS</code> are supported and indicated with the <code>variadic</code> keyword. In this case the arguments all have to be of the same type. Here is a function summing all the arguments</p>
+
+<pre><code class="language-javascript">drop function if exists fn_klutz();
+create or replace function fn_klutz(
+    variadic args numeric[]
+)
+    returns numeric
+as $$
+declare
+    i numeric;
+    r numeric;
+begin
+    r=0;
+    i=1;
+    loop
+        exit when i=array_length(args,1)+1;
+        r=r+args[i];
+        i=i+1;
+    end loop;
+    return r;
+end; $$
+language plpgsql;
+select * from fn_klutz(1,2,3,4);</code></pre>
+<p>To find out more about <code>PostgreSQL</code> functions head on over to <a href="https://www.postgresql.org/docs/9.1/sql-createfunction.html">sql-createfunction</a></p>
+<h3>Anonymous Code Blocks and Parameterization</h3>
+<p>Postgre will not allow you to parameterize values within anonymous code blocks, and one way of working around that is to
+put your code block in a function, for example </p>
+<pre><code class="language-javascript">DO $$
+DECLARE
+    -- declarations
+    -- ... CANT USE PARAMETERS HERE!1!
+BEGIN
+    -- logic
+    -- ... CANT USE PARAMETERS HERE!!!
+    return ret
+END $$;</code></pre>
+<p>The above unnamed block can be placed into a function as follows</p>
+<pre><code class="language-javascript">drop function if exists fn_foo();
+create or replace function fn_foo(a int,b int,c int)
+    -- return type
+    -- ...
+as $$
+
+declare
+    -- declarations
+    -- ...
+begin
+    -- logic
+    -- ...
+    return ret
+end; $$
+language plpgsql;</code></pre>
+<p>This can then be called using parameters as follows</p>
+<pre><code class="language-javascript">fn_foo(%,%,%);</code></pre>
+
+
+<script>
+	Prism.highlightAll()
+</script>

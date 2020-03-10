@@ -1,0 +1,97 @@
+<p>
+	The Mendix <code>Excel Importer</code> module allows you to
+	configure an import process, map attributes, and perform
+	an import from an Excel file using that configuration.
+</p>
+<p>
+	The idea is to provide runtime configurable data import
+	from Excel files. Excel is by no means something
+	you can call a migration source, anybody insane enough
+	to store all their data in <code>.xls[x]</code> files
+	should consider not using computers at all.
+</p>
+<p>
+	The <code>Excel Importer</code> primariliy uses
+	<code>org.apache.poi</code> and <code>org.xml.sax</code>
+	for its parsing.
+</p>
+<p>
+	Let's take a look how this module is implemented
+</p>
+<pre><code class="language-bash">.
+├── actions
+│   ├── GetHeaderInformationFromExcelFile.java
+│   ├── RefreshClass.java
+│   └── StartImportByTemplate.java
+├── datasets
+├── proxies
+│   ├── AdditionalProperties.java
+│   ├── Column.java
+│   ├── constants
+│   │   └── Constants.java
+│   ├── DataSource.java
+│   ├── ImportActions.java
+│   ├── Log.java
+│   ├── MappingType.java
+│   ├── microflows
+│   │   └── Microflows.java
+│   ├── ReferenceDataHandling.java
+│   ├── ReferenceHandling.java
+│   ├── ReferenceHandlingEnum.java
+│   ├── ReferenceKeyType.java
+│   ├── RemoveIndicator.java
+│   ├── StatisticsLevel.java
+│   ├── Status.java
+│   ├── Template.java
+│   ├── TemplateDocument.java
+│   ├── TemplateType.java
+│   ├── ValidationResult.java
+│   ├── ValidationResult2.java
+│   ├── XMLDocumentTemplate.java
+│   └── YesNo.java
+└── reader
+    ├── ExcelImporter.java
+    └── readers
+        ├── DocProperties.java
+        ├── ExcelColumn.java
+        ├── ExcelExtension.java
+        ├── ExcelHeadable.java
+        ├── ExcelReader.java
+        ├── ExcelRowProcessor.java
+        ├── ExcelXLSReaderDataFirstPassListener.java
+        ├── ExcelXLSReaderDataSecondPassListener.java
+        ├── ExcelXLSReaderHeaderFirstPassListener.java
+        ├── ExcelXLSReaderHeaderSecondPassListener.java
+        ├── ExcelXLSXDataReader.java
+        ├── ExcelXLSXHeaderReader.java
+        ├── ExcelXLSXReader.java
+        ├── ReadOnlySharedStringsTable.java
+        └── replication
+            ├── ExcelReplicationSettings.java
+            └── ExcelValueParser.java</code></pre>
+<p>
+	The main end-developer functions are <code>excelimporter.actions.GetHeaderInformationFromExcelFile</code>, <code>excelimporter.actions.RfreshClass</code>, and <code>excelimporter.actions.StartImportByTemplate</code>. <code>RefreshClass</code> is trivial and actually has nothing to do with the import process.
+</p>
+<p>
+	<code>GetHeaderInformationFromExcelFile</code> is a Java Action wrapper. It synchronises all the excel columns and adds or updates or removes the existing columns from the template in the parameter. It always returns true.
+	<code>GetHeaderInformationFromExcelFile</code> uses <code>excelimporter.reader.ExcelImporter.getColumns</code> that takes a <code>System.FileDocument</code> type's contents and extracts the headers of the sheet that was set up in the template. In order to do this it uses <code>excelimporter.reader.readers.ExcelReader</code>'s <code>getHeaders</code> function. It uses the <code>SheetIndex</code> member of the template to select a specific sheet. To read <code>.xls</code> or <code>.xlsx</code> files the <code>POIFSFileSystem</code> class is used on the input stream of the <code>System.FileDocument</code>. <code>org.apache.poi.hssf.eventusermodel</code> classes are also used in the synchronization.
+</p>
+<p>
+	<code>getHeaders</code> first checks the file name of the
+	<code>IMendixObject</code> <code>System.FileDocument</code>
+	type and checks that the sheet number is <code>geq</code> 0.
+	If it is it commences two passes. The first pass calls 
+	<code>headersFirstPass</code> which returns a <code>HashMap&lt;Integer,String&gt;</code> representing the headers. In this function
+	an <code>HSSFRequest</code> is used with an overridden
+	<code>HSSFListener</code> <code>excelimporter.reader.readers.ExcelXLSReaderHeaderFirstPassListener</code> implementation which has its <code>processRecord</code> method implemented to process the records from the
+	sheet.
+</p>
+<p>
+	Thereafter an <code>excelimporter.reader.readers.ExcelXLSReaderSecondPassListener</code> is used and ultimately a list of <code>ExcelColumn</code> returned. <code>excelimporter.reader.ExcelImporter.getColumns</code> uses <code>getHeaders</code> to build and return a list of objects.
+</p>
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+
+

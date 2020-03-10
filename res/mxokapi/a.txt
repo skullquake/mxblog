@@ -1,0 +1,323 @@
+Skip to content
+ 
+
+  • Why GitHub?
+    Features →
+      □ Code review
+      □ Project management
+      □ Integrations
+      □ Actions
+      □ Package registry
+      □ Team management
+      □ Social coding
+      □ Documentation
+      □ Code hosting
+      □ Customer stories →
+      □ Security →
+  • Enterprise
+  • Explore
+      □ Explore GitHub →
+
+    Learn & contribute
+
+      □ Topics
+      □ Collections
+      □ Trending
+      □ Learning Lab
+      □ Open source guides
+
+    Connect with others
+
+      □ Events
+      □ Community forum
+      □ GitHub Education
+  • Marketplace
+  • Pricing
+    Plans →
+      □ Compare plans
+      □ Contact Sales
+      □ Nonprofit →
+      □ Education →
+
+[                    ] [search-key]
+
+  •  
+    ●
+    In this repository All GitHub ↵
+    Jump to ↵
+
+  • No suggested jump to results
+
+  •  
+    ●
+    In this repository All GitHub ↵
+    Jump to ↵
+  •  
+    ●
+    In this repository All GitHub ↵
+    Jump to ↵
+
+Sign in Sign up
+
+  • Watch 25
+  • Star 143
+  • Fork 49
+
+woo-j/OkapiBarcode
+
+Code Issues 6 Pull requests 1 Projects 0 Security Insights
+Dismiss
+Join GitHub today
+
+GitHub is home to over 36 million developers working together to host and
+review code, manage projects, and build software together.
+
+Sign up
+Open-source barcode encoding program written in Java http://
+www.okapibarcode.org.uk
+
+  • 670 commits
+  • 1 branch
+  • 16 releases
+  • Fetching contributors
+  • Apache-2.0
+
+ 1. Java 97.2%
+ 2. PostScript 2.8%
+
+Java PostScript
+Branch: master New pull request
+Find File
+Clone or download
+
+Clone with HTTPS  
+
+Use Git or checkout with SVN using the web URL.
+
+[https://github.com/w]
+Download ZIP
+
+Downloading...
+
+Want to be notified of new releases in woo-j/OkapiBarcode?
+
+Sign in Sign up
+
+Launching GitHub Desktop...
+
+If nothing happens, download GitHub Desktop and try again.
+
+Go back
+
+Launching GitHub Desktop...
+
+If nothing happens, download GitHub Desktop and try again.
+
+Go back
+
+Launching Xcode...
+
+If nothing happens, download Xcode and try again.
+
+Go back
+
+Launching Visual Studio...
+
+If nothing happens, download the GitHub extension for Visual Studio and
+try again.
+
+Go back
+
+@gredler
+gredler Bump version to 0.2.1
+Latest commit 996fcfc Jul 21, 2019
+Permalink
+
+Type           Name                  Latest commit message         Commit
+                                                                    time
+     Failed to load latest commit information.
+                              Upgrade Gradle to version 2.14.1,    Dec
+●    gradle/wrapper           the last version in the 2.x line     21,
+                                                                   2016
+                              Logmars: allow empty data if         May
+●    src                      emptyContentAllowed is set to true   18,
+                                                                   2019
+                              Some test properties files contain   Feb
+●    .gitattributes           enough special characters that git…  27,
+                                                                   2016
+                              SVG renderer: try to clean up all    Jan
+●    .gitignore               user-provided strings that could in… 16,
+                                                                   2018
+                              Move the TravisCI build to           Dec 4,
+●    .travis.yml              oraclejdk8, since it looks like      2017
+                              oraclejdk7…
+                                                                   Oct
+●    LICENSE                  Update LICENSE                       18,
+                                                                   2014
+●    README.md                README: no need to fill background   Jul 3,
+                              yourself now                         2018
+                                                                   Jul
+●    build.gradle             Bump version to 0.2.1                20,
+                                                                   2019
+                              Add build configuration for upload   Mar
+●    gradle.properties        to Maven central.                    20,
+                                                                   2015
+                                                                   Feb
+●    gradlew                  gradlew should be executable         27,
+                                                                   2016
+                              Some test properties files contain   Feb
+●    gradlew.bat              enough special characters that git…  27,
+                                                                   2016
+                              Readme: separate out the GUI usage   Feb
+●    okapi-gui-screenshot.png and library usage sections, add GU…  21,
+                                                                   2018
+
+README.md
+
+ Okapi Barcode License Maven Central Build Status
+
+Okapi Barcode is an open-source barcode generator written entirely in
+Java, supporting over 50 encoding standards, including all ISO standards.
+Okapi Barcode is based on Zint, an open-source barcode encoding library
+developed in C, and builds on the years of work that have been invested
+in that project.
+
+ Supported Symbologies
+
+  • Australia Post variants:
+      □ Standard Customer
+      □ Reply Paid
+      □ Routing
+      □ Redirection
+  • Aztec Code
+  • Aztec Runes
+  • Channel Code
+  • Codabar
+  • Codablock F
+  • Code 11
+  • Code 128
+  • Code 16k
+  • Code 2 of 5 variants:
+      □ Matrix 2 of 5
+      □ Industrial 2 of 5
+      □ IATA 2 of 5
+      □ Datalogic 2 of 5
+      □ Interleaved 2 of 5
+      □ ITF-14
+      □ Deutsche Post Leitcode
+      □ Deutsche Post Identcode
+  • Code 32 (Italian pharmacode)
+  • Code 3 of 9 (Code 39)
+  • Code 3 of 9 Extended (Code 39 Extended)
+  • Code 49
+  • Code 93
+  • Code One
+  • Composite
+  • Data Matrix
+  • Dutch Post KIX Code
+  • EAN variants:
+      □ EAN-13
+      □ EAN-8
+  • Grid Matrix
+  • GS1 DataBar variants:
+      □ GS1 DataBar
+      □ GS1 DataBar Stacked
+      □ GS1 DataBar Stacked Omnidirectional
+  • GS1 DataBar Expanded variants:
+      □ GS1 DataBar Expanded
+      □ GS1 DataBar Expanded Stacked
+  • GS1 DataBar Limited
+  • Japan Post
+  • Korea Post
+  • LOGMARS
+  • MaxiCode
+  • MSI (Modified Plessey)
+  • PDF417 variants:
+      □ PDF417
+      □ Truncated PDF417
+      □ Micro PDF417
+  • Pharmacode
+  • Pharmacode Two-Track
+  • POSTNET / PLANET
+  • QR Code
+  • Royal Mail 4 State (RM4SCC)
+  • Telepen variants:
+      □ Telepen
+      □ Telepen Numeric
+  • UPC variants:
+      □ UPC-A
+      □ UPC-E
+  • USPS OneCode (Intelligent Mail)
+
+ Library Usage
+
+To generate barcode images in your own code using the Okapi Barcode
+library, use one of the symbology classes linked above:
+
+ 1. instantiate the class,
+ 2. customize any relevant settings,
+ 3. invoke setContent(String), and then
+ 4. pass the symbol instance to one of the available symbol renderers (
+    Java 2D, PostScript, SVG)
+
+Code128 barcode = new Code128();
+barcode.setFontName("Monospaced");
+barcode.setFontSize(16);
+barcode.setModuleWidth(2);
+barcode.setBarHeight(50);
+barcode.setHumanReadableLocation(HumanReadableLocation.BOTTOM);
+barcode.setContent("123456789");
+
+int width = barcode.getWidth();
+int height = barcode.getHeight();
+
+BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_GRAY);
+Graphics2D g2d = image.createGraphics();
+Java2DRenderer renderer = new Java2DRenderer(g2d, 1, Color.WHITE, Color.BLACK);
+renderer.render(barcode);
+
+ImageIO.write(image, "png", new File("code128.png"));
+
+Okapi Barcode JARs are available for download from Maven Central.
+
+ GUI Usage
+
+To use the Swing GUI, just run the OkapiUI class. The GUI allows you to
+explore the supported barcode symbologies and test them with different
+configurations and data.
+
+Okapi GUI Screenshot
+
+ Building
+
+gradlew check: Compiles and runs all quality checks, including the unit
+tests.
+gradlew jar: Builds the JAR file.
+gradlew uploadArchives: Deploys to Maven Central (requires a modified
+gradle.properties file).
+
+NOTE: The unit tests should all pass under Oracle JDK, but will probably
+not all pass under OpenJDK. The tests verify barcode rendering image
+output, and the output images generated by OpenJDK are a bit different
+from the output images generated by the Oracle JDK (because their 2D
+graphics and font subsystems are slightly different).
+
+  • © 2019 GitHub, Inc.
+  • Terms
+  • Privacy
+  • Security
+  • Status
+  • Help
+
+ 
+
+  • Contact GitHub
+  • Pricing
+  • API
+  • Training
+  • Blog
+  • About
+
+You can’t perform that action at this time.
+You signed in with another tab or window. Reload to refresh your session.
+You signed out in another tab or window. Reload to refresh your session.

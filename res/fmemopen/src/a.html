@@ -1,0 +1,35 @@
+<p>Here we look at <code>fmemopen</code> which is used to open a file and map it to memory</p>
+<div class="well">
+<pre><code class="language-c">#include &lt;string.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#define handle_error(msg) \
+    do { perror(msg); exit(EXIT_FAILURE); } while (0)
+int main(int argc, char *argv[]) {
+    FILE *out, *in;
+    int v, s;
+    size_t size;
+    char *ptr;
+    if (argc != 2) {
+        fprintf(stderr, &quot;Usage: %s '&lt;num&gt;...'\n&quot;, argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    in = fmemopen(argv[1], strlen(argv[1]), &quot;r&quot;);
+    if (in == NULL)
+        handle_error(&quot;fmemopen&quot;);
+    out = open_memstream(&amp;ptr, &amp;size);
+    if (out == NULL)
+        handle_error(&quot;open_memstream&quot;);
+    for (;;) {
+        s = fscanf(in, &quot;%d&quot;, &amp;v);
+        if (s &lt;= 0)
+            break;
+        s = fprintf(out, &quot;%d &quot;, v * v);
+        if (s == -1)
+            handle_error(&quot;fprintf&quot;);
+    }
+    fclose(in);
+    fclose(out);
+    printf(&quot;size=%zu; ptr=%s\n&quot;, size, ptr);
+    free(ptr);
+    exit(EXIT_SUCCESS); }</code></pre></div>

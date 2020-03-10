@@ -1,0 +1,58 @@
+Usage: cc65 [options] file
+Short options:
+  -Cl				Make local variables static
+  -Dsym[=defn]			Define a symbol
+  -E				Stop after the preprocessing stage
+  -I dir			Set an include directory search path
+  -O				Optimize code
+  -Oi				Optimize code, inline more code
+  -Or				Enable register variables
+  -Os				Inline some standard functions
+  -T				Include source as comment
+  -V				Print the compiler version number
+  -W warning[,...]		Suppress warnings
+  -d				Debug mode
+  -g				Add debug info to object file
+  -h				Help (this text)
+  -j				Default characters are signed
+  -mm model			Set the memory model
+  -o name			Name the output file
+  -r				Enable register variables
+  -t sys			Set the target system
+  -v				Increase verbosity
+
+Long options:
+  --add-source			Include source as comment
+  --all-cdecl			Make functions default to __cdecl__
+  --bss-name seg		Set the name of the BSS segment
+  --check-stack			Generate stack overflow checks
+  --code-name seg		Set the name of the CODE segment
+  --codesize x			Accept larger code by factor x
+  --cpu type			Set cpu type (6502, 65c02)
+  --create-dep name		Create a make dependency file
+  --create-full-dep name	Create a full make dependency file
+  --data-name seg		Set the name of the DATA segment
+  --debug			Debug mode
+  --debug-info			Add debug info to object file
+  --debug-opt name		Debug optimization steps
+  --dep-target target		Use this dependency target
+  --disable-opt name		Disable an optimization step
+  --eagerly-inline-funcs		Eagerly inline some known functions
+  --enable-opt name		Enable an optimization step
+  --help			Help (this text)
+  --include-dir dir		Set an include directory search path
+  --inline-stdfuncs		Inline some standard functions
+  --list-opt-steps		List all optimizer steps and exit
+  --list-warnings		List available warning types for -W
+  --local-strings		Emit string literals immediately
+  --memory-model model		Set the memory model
+  --register-space b		Set space available for register variables
+  --register-vars		Enable register variables
+  --rodata-name seg		Set the name of the RODATA segment
+  --signed-chars		Default characters are signed
+  --standard std		Language standard (c89, c99, cc65)
+  --static-locals		Make local variables static
+  --target sys			Set the target system
+  --verbose			Increase verbosity
+  --version			Print the compiler version number
+  --writable-strings		Make string literals writable

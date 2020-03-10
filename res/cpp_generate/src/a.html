@@ -1,0 +1,24 @@
+<p>STL <code>generate</code> populates a range using a function that takes no parameters.
+The function's return value is assigned to the element being iterated through.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;algorithm&gt;
+#include&lt;random&gt;
+int main(int argc,char** argv){
+  std::vector&lt;int&gt; a;
+  a.resize(8);
+  std::random_device rd;
+  std::mt19937 g(rd());
+  std::uniform_int_distribution&lt;&gt; d(1,32);
+  std::generate(a.begin(),a.end(),[&](){
+    return d(g);
+  });
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

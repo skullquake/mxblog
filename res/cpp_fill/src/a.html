@@ -1,0 +1,32 @@
+<p>STL <code>fill</code> assigns values to elements of a container.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;algorithm&gt;
+int main(int argc,char** argv){
+  std::vector&lt;int&gt; a;
+  a.resize(8);
+  std::fill(a.begin(),a.end(),0);
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p>Related to <code>std::fill</code> is <code>std::fill_n</code>, which fills the first <code>n</code> elements in the container with a given value, for example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;algorithm&gt;
+int main(int argc,char** argv){
+  std::vector&lt;int&gt; a;
+  a.resize(8);
+  std::fill(a.begin(),a.end(),0);
+  std::fill_n(a.begin(),a.size()/2,1);
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

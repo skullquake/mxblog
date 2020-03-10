@@ -1,0 +1,13 @@
+<p>Let's look at the <code>static</code> and <code>extern</code> keywords used in <code>c</code>. These are <i>storage-class</i> specifiers, telling
+the compiler where and how to store a variable. They are also <i>linking</i> specifiers, meaning if you have two different files <code>a.c</code> and
+<code>b.c</code> having an identifier with the same name, how the compiler is supposed to handle that.</p>
+<p><code>extern</code> specifies that <i>external linkage</i> is to be used. If you <i>declare</i> a variable or function as <code>extern</code> it tells the compiler
+that that variable or function is actually defined in another file. <i>Declaration</i> states the linkage and type, for example <code>extern int foo;</code>. <i>Definition</i>
+is where space is actually allocated for the variable. In terms of functions, <code>definition</code> is the function body, and <code>declaration</code> is the signature, 
+for example <code>extern void foo();</code></p>
+<p>The <code>static</code> keyword tells the compiler that a variable or function is <i>internally linked</i>, meaning that it is only visible from within the file/translation unit, so
+you can refer to it from another file using <code>extern</code>.</p>
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>

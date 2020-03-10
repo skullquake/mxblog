@@ -1,0 +1,24 @@
+<p>Let's look at using <i>varargs</i> in <code>c</code> using <code>stdarg.h</code> which provides <code>va_list</code> type and <code>va_start()</code>, <code>va_arg()</code> and <code>va_end()</code>.</p>
+<pre><code class="language-javascript">#include&lt;stdarg.h&gt;
+#include&lt;stdio.h&gt;
+int maxof(int n_args,...){
+	va_list ap;
+	va_start(ap,n_args);
+	int max=va_arg(ap,int);
+	for(int i=2;i&lt;=n_args;i++){
+		int a=va_arg(ap,int);
+		if(a&gt;max)max=a;
+	}
+	va_end(ap);
+	return max;
+}
+int main(int argc,char** argv){
+	printf("%d\n",maxof(1,2));
+	printf("%d\n",maxof(1,2,3));
+	printf("%d\n",maxof(4,3,2,1));
+	return 0;
+}</code></pre>
+<p>In order to do the same kind of thing in <code>c++</code> you can use C++11 <i>variadic templates</i>.</p>
+<script>
+	Prism.highlightAll()
+</script>

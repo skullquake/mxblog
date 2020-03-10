@@ -1,0 +1,63 @@
+<p>
+	Let's take a look at compiling a shared object with <code>gcc</code>
+	A <i>shared object</i> is a library that is compiled and loaded
+	in by the program at runtime. The shared library is compiled, installed
+	in some local folder or the system/user library folder (<code>/usr/lib</code>
+	or <code>usr/local/lib</code>), a client program is compiled and linked
+	agains the shared library in a way that it knows where to find it, and 
+	upon executing the program, it loads the shared object and may call
+	its functions.
+</p>
+<p>
+	Shared objects are used all the time when you compile programs making use
+	of precompiled libraries like <code>libcurl</code>, <code>sqlite</code>
+	<code>liballegro</code> etc. It leads to smaller executable size and
+	is a bit more maintainable.
+</p>
+<p>
+	Let's look at a <code>makefile</code> to compile a shared object
+	and a program that uses that shared object.
+</p>
+<pre><code class="language-javascript">CC=gcc
+APPSRC=./src/a.c
+APPOBJ=./bin/a.o
+APPBIN=./bin/a.out
+LIBSRC=./src/b.c
+LIBOBJ=./bin/b.o
+LIB=./lib/libb.so
+CFLAGS=-I./include
+all:$(APPBIN)
+$(APPBIN): $(APPSRC) $(LIB)
+	gcc $(CFLAGS) -L./lib $(APPSRC) -lb -o $(APPBIN)
+$(LIBOBJ): $(LIBSRC)
+	gcc $(CFLAGS) -c -Wall -Werror -fpic $(LIBSRC) -o $(LIBOBJ)
+$(LIB): $(LIBOBJ)
+	gcc -shared $(LIBOBJ) -o $(LIB)
+install: $(LIB)
+	cp $(LIB) ~/../usr/lib
+	cp ./include/* ~/../usr/include -r
+.phony:clean 
+clean:
+	rm $(BIN) $(BINOBJ) $(LIB) $(LIBOBJ)</code></pre>
+<p>
+	The above will compile <code>libb.so</code> in the <code>./lib</code>
+	folder. It will also compile <code>a.out</code> in the <code>./bin</code>
+	folder that will use that library. The relevant flags to pass
+	to the compiler when compiling the shared object are <code>-fpic</code>
+	and <code>-shared</code>. In the above this is done in two passes,
+	first <code>-fpic</code> for compiling the relocatable object, and then
+	<code>-shared</code> for creating the shared object. The extension
+	of a shared object is <code>.so</code> on *nix, and <code>.dll</code> 
+	on Windows.
+</p>
+<p>
+	The above depends on the shared object being installed at <code>/usr/lib</code>.
+	What if you want to have it installed somewhere else? This is where the 
+	<code>-rpath</code> flag comes in when compiling your client program. If your
+	shared object is located relative at <code>./lib</code> for example and you
+	want your client program to look for it there, you can use <code>-rpath=./lib</code>
+	when compiling the client program.
+</p>
+<script>
+	Prism.highlightAll()
+</script>

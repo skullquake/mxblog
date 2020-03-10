@@ -1,0 +1,10 @@
+Usage: chrcvt65 [options] file [options] [file]
+Short options:
+  -h			Help (this text)
+  -v			Be more verbose
+  -V			Print the version number and exit
+
+Long options:
+  --help		Help (this text)
+  --verbose		Be more verbose
+  --version		Print the version number and exit

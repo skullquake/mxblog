@@ -1,0 +1,5 @@
+accept: application/json
+title: cpp - std::bind
+status: publish
+type: Post
+image: cpp.png

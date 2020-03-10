@@ -1,0 +1,81 @@
+<p><code>Catch2</code> is a header only testing framework for <code>C++</code>.</p>
+<pre><code class="language-javascript">git clone https://github.com/catchorg/Catch2
+cd ./Catch2
+mkdir ./build
+cd ./build
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ../
+make -j8
+make install</code></pre>
+<p>For <code>termux android</code> I ended up also passing in <code>-DCMAKE_MODULE_LINKER_FLAGS=-llog</code> and <code>-DCMAKE_EXE_LINKER_FLAGS=-llog</code> to get the logging library in. Header files should live at <code>/usr/include/catch2</code>, and the main one to include is <code>&lt;catch2/catch.hpp&gt;</code>. With everything installed you can compile the following for a test</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#define CATCH_CONFIG_MAIN //tell main(), only do this for one source file
+#include&lt;catch2/catch.hpp&gt;
+unsigned int Factorial(unsigned int number){
+  return number&lt;1?number:Factorial(number-1)*number;
+}
+TEST_CASE(
+	"Factorials are computed",
+	"[factorial]"
+){
+	REQUIRE( Factorial(1)  == 1 );
+	REQUIRE( Factorial(2)  == 2 );
+	REQUIRE( Factorial(3)  == 6 );
+	REQUIRE( Factorial(10) == 3628800 );
+}</code></pre>
+<p>To compile the above for <code>termux</code>, link with <code>-llog</code>.</p>
+<p>The above will create a complete executable with command line flags and everything. It runs the tests and reports a summary of how many tests passed and how many failed.</p>
+<p>Sample output as follows</p>
+<pre><code class="language-javascript">-------------------------------------------------------------------------------
+Factorials are computed
+-------------------------------------------------------------------------------
+./src/a.cpp:10
+...............................................................................
+
+./src/a.cpp:11: FAILED:
+  REQUIRE( Factorial(1) == 1 )
+with expansion:
+  0 == 1
+
+===============================================================================
+test cases: 1 | 1 failed
+assertions: 1 | 1 failed</code></pre>
+<h3>STL Tests</h3>
+<p>Testing work done with <code>STL</code>, the following serves as example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#define CATCH_CONFIG_MAIN
+#include&lt;catch2/catch.hpp&gt;
+#include&lt;vector&gt;
+#include&lt;algorithm&gt;
+std::vector&lt;int&gt; times7(std::vector&lt;int&gt; const& numbers){
+  auto results=std::vector&lt;int&gt;{};
+  std::transform(
+    std::begin(numbers),
+    std::end(numbers),
+    std::back_inserter(results),
+    [](int n){
+      return 7*n;
+    }
+  );
+  return results;
+}
+TEST_CASE(
+  "times7 computed",
+  "[times7]"
+){
+  auto const inputs=std::vector&lt;int&gt;{3,4,7};
+  auto const results=times7(inputs);
+  auto const expected={21,28,49};
+  REQUIRE(
+    std::equal(
+      std::begin(results),
+      std::end(results),
+      std::begin(expected),
+      std::end(expected)
+    )
+  );
+}</code></pre>
+<p>In the above we define <code>times7</code> for a single case</p>
+<script>
+	Prism.highlightAll()
+</script>
+

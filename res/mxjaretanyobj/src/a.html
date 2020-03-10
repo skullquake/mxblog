@@ -1,0 +1,182 @@
+<p>
+	The title of this post is slightly misleading. In Mendix
+	there is some difference between the MBM Ide and the mendix
+	runtime in terms of what you can do. For example, if you 
+	create in MBM a java action that takes an object, MBM expects
+	you to specify the type, and if you do not, it blocks you
+	from compiling the project. There is something called a <i>TypeParameter</i>, which was taken out for a few versions, and then put back in for you to use. The <i>TypeParameter</i> allows you to select any object type
+	as input parameter to your java action.
+</p>
+<p>
+	If you take a look at the java, <i>TypeParameters</i> are of type <code>com.mendix.systemwideinterfaces.core.IMendixObject</code>. All Mendix objects have this as their base class.
+</p>
+<p>
+	Using <i>TypeParameter</i> types are very useful and makes
+	your java actions more reusable. You'll find that lots of java actions by Mendix
+	and other parties use the <i>TypeParameter</i> types as input
+	parameters, which puts forward the question
+	<i>"How can we return any type"?</i>
+</p>
+<p>
+	In regular programming you would either return a <i>base-class</i> or <i>void</i> pointer type. You could also pass in variables by reference or pointers to variables as parameters and manipulate them.
+</p>
+<p>
+	A solution in Mendix to this that provides lots of flexibility is
+	to reflect into the <i>action-stack</i>, which is a
+	<code>java.util.ArrayList</code> containing
+	<code>com.mendix.modules.microflowengine.microflow.impl.MicroflowImpl</code>
+</p>
+<p>
+	<i>Action-stack</i> elements are the actual runtime representation
+	of either a <i>microflow</i> or <i>java-action</i> execution.
+	If it is a <i>microflow</i>, then you can actually get at
+	its parents, all its elements, meta-information, etc. One 
+	of the things you can do with the elements is manipulate them.
+	Wether they are lists of mendix objects, a single mendix object,
+	or a simple type, you can get their value, manipulate that value
+	and also set their value. You can even create objects and variables in the
+	<i>microflow</i> that did not exist. Let's take a look at how we 
+	can do that.
+</p>
+<p>
+	In order to get at the <i>action-stack</i>, you can use the
+	following
+</p>
+<pre><code class="language-javascript">var astack=getContext().getActionStack();</code></pre>
+<p>
+	If you are calling your <code>java</code>/<code>nashorn</code>/<code>graal</code>
+	from a nested <i>microflow</i>, the <code>astack</code> <code>length</code>
+	property will reflect this. The current level in the <i>action-stack</i>
+	will always be <code>astack.size()-1</code>
+</p>
+<p>
+	If you want to get at values in a calling microflow for example
+	from your <code>java</code> or embedded scripting language, you
+	will refer to <code>astack[astack.size()-2]</code>, which is one level up
+	from your current stack level. Let's take a look at how we
+	can access variables from a calling <i>microflow</i>.
+</p>
+<p>
+	Let's say that you have a microflow <code>foo.ivk_bar</code>
+	that calls a <i>java-action</i> with our code that
+	manipulates the <i>action-stack</i>. Let's also assume
+	that it has the following variables/objects instantiated
+	prior to the execution of our <code>java</code> code.
+</p>
+<ul>
+	<li>
+		<code>bool_test</code>: <i>A variable of <code>Integer</code></i>
+	</li>
+	<li>
+		<code>bool_test</code>: <i>A variable of <code>Boolean</code></i>
+	</li>
+	</li>
+	<li>
+		<code>obj_test</code>: <i>An object of <code>Administartion.Account</code></i>
+	</li>
+	<li>
+		<code>arr_test</code>: <i>An list of <code>Administartion.Account</code></i>
+	</li>
+</ul>
+<p>
+	You can get at the values from within your <code>java</code>
+	as follows
+</p>
+<pre><code class="language-javascript">var astack=getContext().getActionStack();
+var mf=astack[astack.size()-2];
+var bool_test=mf.getVariable("bool_test");
+var int_test=mf.getVariable("int_test");
+var obj_test=mf.getVariable("obj_test");
+var arr_test=mf.getVariable("arr_test");</code></pre>
+<p>
+	Simple, but what is the benefit? If you have
+	a pretty hardcoded setup and dont want to bother
+	with the modeler and know whats going on in the microflow,
+	you can just reference the variables manually in your <code>java</code> and not bother changing the interface of the action in the MBM Ide.
+	You can actually implement your <i>java-action</i> interface to 
+	not take parameters of the actual objects, but just their
+	names, and then write your <code>java</code> code to use
+	the names to reflect into the <i>action-stack</i> and get 
+	at the variables by name.
+</p>
+<p>
+	The real benefit comes in when manipulating those variables.
+	For that you can use the <code>setVariable</code> method,
+	but before we do that, let's take a look how we
+	can actually at this point already change things.
+</p>
+<pre><code class="language-javascript">...
+var obj_test=mf.getVariable("obj_test");
+obj_test.setValue(
+	getContext(),
+	"foo",
+	"bar"
+);
+...</code></pre>
+<p>
+	Because <code>obj_test</code> is now referring to
+	an instance of <code>IMendixObject</code> we can change
+	the object. If you actually go on and debug
+	the <i>microflow</i>, you'll see that after the 
+	<code>java</code> part has been executed the changes
+	will be reflected with field <code>foo</code> set to 
+	value <code>bar</code>
+</p>
+<p>
+	For the simple <code>variable</code> types in the microflow
+	we can use the <code>setVariable</code> method, which
+	has an interesting behavior when the variable does not
+	exist.
+</p>
+<pre><code class="language-javascript">...
+var int_test=mf.getVariable("int_test");
+mf.setVariable("int_test",int_test++);
+var int_new=42;
+mf.setVariable("int_new",int_new);
+int_new=mf.getVariable("int_new");
+mf.setVariable("int_new",int_new++);
+...</code></pre>
+<p>
+	This will manipulate <code>int_test</code> in the 
+	<i>microflow</i>, but will also create a new <code>variable</code>
+	in the <i>microflow</i>, then read it in again, increment it,
+	and set it again. When debugging the <i>microflow</i>
+	you will magically see a new variable in the debugging console,
+	even though one was not declared anywhere in the action. This
+	brings us to returning <i>any type</i> from a <i>java-action</i>
+</p>
+<p>
+	It's pretty clear that you can manipulate variables
+	and objects or lists of objects from your <code>java</code>
+	so returning any type will involve populating a previously
+	declared object or list or variable. Simply pass in as a parameter
+	to your <i>java-action</i> the name of the variable and use
+	code similar to the above to manipulate that object, list, or
+	variable. In fact, you can now go on an manipulate numerous
+	such objects, lists, or variables, in effect not only creating
+	any return type, but also numerous return types. It's not really 
+	a return type/s as much as a sort of reference variable/s.
+</p>
+<p>
+	<code>nashorn</code> and <code>graal</code> is pretty
+	easy to prototype, but in <code>java</code> you'll find
+	that the fact that a lot of the classes and functions are
+	<code>private</code> is going to make development a bit more
+	tricky. To cirumvent the java api security you can use reflection
+</p>
+<pre><code class="language-java">
+java.lang.reflect.Method method;
+try{
+	method = astack.get(2).getClass().getMethod("getVariable",java.lang.String.class);
+	try{
+		java.util.List&lt;com.mendix.systemwideinterfaces.core.IMendixObject&gt; lst=(java.util.ArrayList<com.mendix.systemwideinterfaces.core.IMendixObject> )method.invoke(astack.get(astack.size()-2),VARNAM);
+		lst.add(obj);
+	}catch(Exception e){com.mendix.core.Core.getLogger(this.toString()).error(e);}
+}catch (Exception e) {com.mendix.core.Core.getLogger(this.toString()).error(e);}
+</code></pre>
+
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+

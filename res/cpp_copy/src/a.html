@@ -1,0 +1,22 @@
+<p><code>std::copy</code> copies elements in range <code>[first,last)</code> specified by the first and second parameter to another range
+beginning at <code>d_first</code> specified by the third parameter.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;algorithm&gt;
+#include&lt;vector&gt;
+int main(int argc,char** argv){
+	std::vector&lt;int&gt; a={0,1,2,3,4};
+	std::vector&lt;int&gt; b;
+	std::copy(std::begin(a),std::end(a),std::back_inserter(b));
+	for(auto c:a){
+		std::cout&lt;&lt;c&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	for(auto c:b){
+		std::cout&lt;&lt;c&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

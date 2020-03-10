@@ -1,0 +1,5 @@
+accept: application/json
+title: cpp: find
+status: publish
+type: Post
+image: c++.png

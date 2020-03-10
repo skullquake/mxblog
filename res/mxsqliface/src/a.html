@@ -1,0 +1,83 @@
+<p>
+	Here we look at how we can set up a Mendix
+	SQL workbench in order to execute SQL
+	statements and see the results. This is good for
+	testing things out and troubleshooting.
+</p>
+<p>
+	The first thing to do is to set up a simple domain
+	model, which we can then later extend should the need
+	arise. As a minimum we will use <code>Query 1-* Result</code>,
+	with <code>Query</code> having fields <code>String:SQL</code>
+	and <code>String:Description</code>, and <code>Result</code>
+	having <code>String:Value</code>, <code>Date:Date</code> and
+	<code>String:Meta</code>. Create some overview and edit pages,
+	navigation, and set up some security, as we dont want
+	just anyone being able to execute this.
+</p>
+<p>
+	Let's move on to the Java part, as it is necessary to
+	implement all of this. The following <code>jjs</code>
+	will give us an idea on how to implement it in actual
+	java
+</p>
+<pre><code class="language-javascript">var ds=com.mendix.core.Core.dataStorage();
+ds.executeWithConnection(
+ function(a){
+  try{
+   var stmnt=a.prepareStatement(
+    new java.lang.String(
+      'SELECT * from "public"."astronomy$hygfull" WHERE "propername" LIKE \'%Polaris%\' LIMIT 8'
+    )
+   );
+   var rset=stmnt.executeQuery();
+   var rsetmeta=rset.getMetaData();
+   for(var i=0;i&lt;rsetmeta.getColumnCount();i++){
+    print(rsetmeta.getColumnName(i+1));
+    if(i&lt;rsetmeta.getColumnCount()-1)
+     print(',')
+   }
+   println('');
+   while(rset.next()){
+    rsetmeta=rset.getMetaData();
+    for(var i=0;i&lt;rsetmeta.getColumnCount();i++){
+     try{
+      print(rset.getString(new java.lang.String(rsetmeta.getColumnName(i+1))));
+     }catch(e){
+     }
+     if(i&lt;rsetmeta.getColumnCount()-1)
+      print(',')
+    }
+    println('');
+   }
+   rset.close();
+  }catch(e){
+   println(e);
+  }
+ }
+);</code></pre>
+<p>
+	From the above it is quite clear that we are using the Mendix
+	Java API to connect to the current database as used by the
+	runtime. For now we will not connect to other database,
+	but the could would be similar, and you would also
+	require a <code>Config</code> object with all the attributes
+	necessary to specify and connect to a database. Here,
+	however, we will only connect to the local database, no
+	<code>Config</code> required.
+</p>
+<div class="row">
+	<div class="col-sm-8 col-sm-offset-2">
+		<div class="well">
+			asdf
+		</div>
+	</div>
+</div>
+<p>
+	Attached below is a Module for the above described.
+</p>
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+

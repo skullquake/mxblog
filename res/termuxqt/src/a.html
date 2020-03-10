@@ -1,0 +1,38 @@
+<p>Let's look at gettings started with Qt on Termux. Depending on your repositories, you might get the following when running <code>pkg search qt</code></p>
+<pre><code class="language-bash">
+qt5-base/x11,now 5.11.3-3 aarch64 [installed,automatic]
+qt5-base-static/x11 5.11.3-3 aarch64
+qt5-declarative/x11 5.11.3-3 aarch64
+qt5-declarative-dev/x11 5.11.3-3 aarch64
+qt5-tools/x11,now 5.11.3-3 aarch64 [installed,automatic]
+qt5-tools-dev/x11,now 5.11.3-3 aarch64 [installed]
+qt5-x11extras/x11 5.11.3-3 aarch64
+qt5-x11extras-dev/x11 5.11.3-3 aarch64
+</code></pre>
+<p>It's find just to install everything</p>
+<pre><code class="language-bash">pkg search qt|\
+	grep aarch64|\
+	cut -f1 -d"/"|
+	while read PKG;do\
+		pkg install $PKG -y;\
+	done</code></pre>
+<p>This will get you <code>qmake</code> and a couple of other stuff</p>
+<p>First we need to create a project file, <code>a.pro</code></p>
+<pre><code class="language-makefile">TEMPLATE=app
+TARGET=./bin/a
+QT+=core
+QT-=gui
+CONFIG+=console
+greaterThan(QT_MAJOR_VERSION,4):QT+=widgets
+SOURCES+=./src/a.cpp</code></pre>
+<p>This is much like a <code>CMakeLists.txt</code> file or a <code>configure</code> script that is used to create an ultimate <code>Makefile</code> that you'll use to build the binary. In order to create the <code>makefile</code> from the <code>project</code> file, run <code>qmake</code>.</p>
+<p>You also need to create the output directory using <code>mkdir ./out</code>. Next, create a source file, <code>./src/a.cpp</code></code>
+<pre><code class="language-c++">#include &lt;QDebug&gt;
+int main(int argc, char *argv[]) {
+	qDebug() &lt;&lt; &quot;hello world&quot; &lt;&lt; endl &lt;&lt; endl;
+	return 0;
+}</code></pre>
+<p>After that, execute <code>make</code>.</p>
+<script>
+	Prism.highlightAll()
+</script>

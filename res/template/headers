@@ -1,0 +1,5 @@
+accept: application/json
+title: TITLE
+status: publish
+type: Post
+image: unix.png

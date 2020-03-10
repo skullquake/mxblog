@@ -1,0 +1,20 @@
+<p>Writing to the system log in <code>gcc</code>, the following will serve as illustration</p>
+<pre><code class="language-javascript">
+#include&lt;stdio.h&gt;
+#include&lt;syslog.h&gt;
+int main(int argc,char** argv){
+	printf("main()\n");
+	setlogmask (LOG_UPTO (LOG_NOTICE));
+	openlog ("exampleprog", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+	for(int i=0;i&lt;1024;i++){
+		syslog (LOG_NOTICE, "Program started by User %d", getuid ());
+		syslog (LOG_INFO, "A tree falls in a forest");
+	}
+	closelog ();
+	return 0;
+}</code></pre>
+<p>Link with <code>-llog</code> if necessary. You can view the log with <code>dmesg</code>. Under termux, to view the log, use the following</p>
+<pre><code class="language-javascript">logcat -s 'syslog:*'</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

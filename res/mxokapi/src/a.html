@@ -1,0 +1,173 @@
+<p>
+	Here we look at using
+	<a href="https://github.com/woo-j/OkapiBarcode">woo-j/OkapiBarcode</a>
+	to render barcodes in Mendix. It supports the following
+	barcode formats:
+</p>
+<ul>
+	<li>Australia Post variants:
+	<ul>
+		<li>Standard Customer</li>
+		<li>Reply Paid</li>
+		<li>Routing</li>
+		<li>Redirection</li>
+	</ul>
+</li>
+<li>Aztec Code</li>
+<li>Aztec Runes</li>
+<li>Channel Code</li>
+<li>Codabar</li>
+<li>Codablock F</li>
+<li>Code 11</li>
+<li>Code 128</li>
+<li>Code 16k</li>
+<li>Code 2 of 5 variants:
+	<ul>
+		<li>Matrix 2 of 5</li>
+		<li>Industrial 2 of 5</li>
+		<li>IATA 2 of 5</li>
+		<li>Datalogic 2 of 5</li>
+		<li>Interleaved 2 of 5</li>
+		<li>ITF-14</li>
+		<li>Deutsche Post Leitcode</li>
+		<li>Deutsche Post Identcode</li>
+	</ul>
+</li>
+<li>Code 32 (Italian pharmacode)</li>
+<li>Code 3 of 9 (Code 39)</li>
+<li>Code 3 of 9 Extended (Code 39 Extended)</li>
+<li>Code 49</li>
+<li>Code 93</li>
+<li>Code One</li>
+<li>Composite</li>
+<li>Data Matrix</li>
+<li>Dutch Post KIX Code</li>
+<li>EAN variants:
+	<ul>
+		<li>EAN-13</li>
+		<li>EAN-8</li>
+	</ul>
+</li>
+<li>Grid Matrix</li>
+<li>GS1 DataBar variants:
+	<ul>
+		<li>GS1 DataBar</li>
+		<li>GS1 DataBar Stacked</li>
+		<li>GS1 DataBar Stacked Omnidirectional</li>
+	</ul>
+</li>
+<li>GS1 DataBar Expanded variants:
+	<ul>
+		<li>GS1 DataBar Expanded</li>
+		<li>GS1 DataBar Expanded Stacked</li>
+	</ul>
+</li>
+<li>GS1 DataBar Limited</li>
+<li>Japan Post</li>
+<li>Korea Post</li>
+<li>LOGMARS</li>
+<li>MaxiCode</li>
+<li>MSI (Modified Plessey)</li>
+<li>PDF417 variants:
+	<ul>
+		<li>PDF417</li>
+		<li>Truncated PDF417</li>
+		<li>Micro PDF417</li>
+	</ul>
+</li>
+<li>Pharmacode</li>
+<li>Pharmacode Two-Track</li>
+<li>POSTNET / PLANET</li>
+<li>QR Code</li>
+<li>Royal Mail 4 State (RM4SCC)</li>
+<li>Telepen variants:
+	<ul>
+		<li>Telepen</li>
+		<li>Telepen Numeric</li>
+	</ul>
+</li>
+<li>UPC variants:
+	<ul>
+		<li>UPC-A</li>
+		<li>UPC-E</li>
+	</ul>
+</li>
+<li>USPS OneCode (Intelligent Mail)</li>
+</ul>
+<p>
+	This list is quite extensive as you can see, and you
+	can go ahead and implement a general interface to the
+	library along the lines of the following <code>jjs</code>
+	prototype
+<pre><code class="language-javascript">try{
+	var Code128=Java.type('uk.org.okapibarcode.backend.Code128') 
+	var HumanReadableLocation=Java.type('uk.org.okapibarcode.backend.HumanReadableLocation') 
+	var Java2DRenderer=Java.type('uk.org.okapibarcode.output.Java2DRenderer') 
+	var barcode = new Code128();
+	barcode.setFontName("Monospaced");
+	barcode.setFontSize(16);
+	barcode.setModuleWidth(2);
+	barcode.setBarHeight(64);
+	barcode.setHumanReadableLocation(HumanReadableLocation.BOTTOM);
+	barcode.setContent("987654321");
+	var width = barcode.getWidth();
+	var height = barcode.getHeight();
+	var image = new java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_BYTE_GRAY);
+	var g2d = image.createGraphics();
+	var renderer = new Java2DRenderer(g2d, 1, java.awt.Color.WHITE, java.awt.Color.BLACK);
+	renderer.render(barcode);
+	var ctx=root.getContext();
+	var fnam="okapitest.png";
+	var arr_obj=com.mendix.core.Core.retrieveXPathQuery(
+	    ctx,
+	    "//WordPress.Image[Name='"+fnam+"']",
+	    0,
+	    1,
+	    {}
+	);
+	var obj=null;
+	if(arr_obj.length&gt;0){
+	    obj=arr_obj[0];
+	}else{
+	    obj=com.mendix.core.Core.instantiate(
+		ctx,
+		"WordPress.Image"
+	    );           
+	}
+	var bos = new java.io.ByteArrayOutputStream();
+	var barr = bos.toByteArray();
+	javax.imageio.ImageIO.write(image,"png",bos);
+	var is = new java.io.ByteArrayInputStream(bos.toByteArray());        
+	com.mendix.core.Core.storeFileDocumentContent(ctx,obj,fnam,is);
+	com.mendix.core.Core.commit(ctx,obj);
+	com.mendix.webui.FeedbackHelper.addRefreshObjectFeedback(ctx,obj.getId());						        
+	com.mendix.webui.FeedbackHelper.addOpenFormFeedback(
+		ctx,
+		'Anonymous/pop_image_view.page.xml',
+		'hello:)',
+		com.mendix.systemwideinterfaces.core.IFeedback.FormTarget.WINDOW,
+		true,
+		800,
+		600,
+		obj.getId(),
+		[]
+	);                
+
+}catch(e){
+	alert(e);
+}</code></pre>
+<p>
+	The results are as follows
+</p>
+<div class="row">
+	<div class="col-sm-8 col-sm-offset-2">
+		<div class="well">
+			asdf
+		</div>
+	</div>
+</div>
+<script>
+	Prism.highlightAll()
+</script>
+
+

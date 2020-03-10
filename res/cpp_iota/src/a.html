@@ -1,0 +1,17 @@
+<p><code>std::iota</code> from <code>numeric</code> fills a range <code>[first,last)</code> with sequentially increasing values from a specified starting point.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;numeric&gt;
+int main(int argc,char** argv){
+  std::vector&lt;int&gt; a;
+  a.resize(8);
+  std::iota(a.begin(),a.end(),0);
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

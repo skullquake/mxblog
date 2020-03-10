@@ -1,0 +1,44 @@
+<p>
+	Let's take a look at how we can manage, serve up, and load JavaScript from the database using webservices.
+</p>
+<p>
+	The first thing is the domain store our libraries and scripts in. For the scripts themselves you can use either a file document or an entity with fields <code>name</code> and <code>content</code>. In order to make it easier to manipulate our scripts in the front-end, however, we can use the latter option.
+</p>
+<p>
+We can group our <code>Js</code> entities into <code>Libs</code>. For this you can create a one-to-many or many-to-many association. A front-end can then be created with an overview for <code>Lib</code> and an edit page for <code>Lib</code> prsenting fields for its name and a grid for its associated <code>Js</code> entity instances.
+</p>
+<p>
+	Both the <code>Js</code> and <code>Lib</code> entities have an <code>active</code> field. If the field is set to true, then the <code>Lib</code> or the <code>Js</code> will be served, and if not, it will not be served.
+</p>
+<p>
+The webservice exposed can be set to take arguments in order for use to control which <code>Lib</code> <code>Js</code> object contents to serve up. We can use url parameters to accomplish this, e.g. <code>lib=foo</code>. If no parameter is specified, all active <code>Lib</code>'s active <code>Js</code> contents will be served up. In order to do this we iterate through all active <code>Lib</code> active <code>Js</code> and concatenate the contents.
+</p>
+<p>
+Order is important, so we can add an <code>idx</code> field on both <code>Lib</code> and <code>Js</code>. It may also be necessary to speed up the process of constructing the resultant JavaScript string from the webservice call, and to accomplish this we implement a caching scheme. We can use a <code>System.FileDocument</code> instance or generalization thereof and store a built version to serve up on the call. To do so we need to expose the <code>createdDate</code> and <code>modifiedDate</code> fields of <code>Lib</code>, <code>Js</code>, as well as <code>Cache</code> and perform timestamp comparison. If <code>Cache</code> outdates either <code>Lib</code> or <code>Js</code> it has to be rebuilt.
+</p>
+<p>
+	To test this all we can create some test libs and js rows
+</p>
+<div class="row">
+	<div class="col-md-6">
+			<pre><code class="language-javascript">console.log('lib0:js0');</code></pre>
+			<pre><code class="language-javascript">console.log('lib0:js1');</code></pre>
+	</div>
+	<div class="col-md-6">
+		<pre><code class="language-javascript">console.log('lib1:js0');</code></pre>
+		<pre><code class="language-javascript">console.log('lib1:js1');</code></pre>
+	</div>
+</div>
+<p>
+	How do we get the JavaScript into the browser? For testing we can add an extras <code>&lt;script&gt;</code> tag in <code>index.html</code>, debug the webservice microflow, and use the browser network inspector as well as inspect the browser console.
+	It is also possible to use the <code>HTMLSnippet</code> widget with the <code>External File</code> field set to our webservice url.
+</p>
+<p>
+	Combining this module with dynamic page reflection may provide the opportunity to implement <i>per-page</i> database driven JS.
+</p>
+<p>
+	Here is a rudimentary implementation of the above described
+</p>
+<script>
+	Prism.highlightAll()
+</script>

@@ -1,0 +1,123 @@
+<p>
+	Let's take a look at a general way to query
+	JSON data. There exists various languages for
+	querying JSON, perhaps the most popular being
+	<a href="https://jsonpath.com">jsonpath</a>
+</p>
+<p>
+	Using <code>jsonpath</code> you can you can use queries
+	like the following
+</p>
+<pre><code class="language-javascript">$['store']['book'][0]['title']</code></pre>
+<p>
+	It's very easy to use, and when used in Mendix can provide
+	a simpler alternative to using full blown <code>Import Mappings</code>
+</p>
+<p>
+	Here we will look at implementing a popular Java port of
+	<code>jsonpath</code>,
+	<a href="https://github.com/json-path/JsonPath">json-path/JsonPath</a>.
+	The first thing is to head on over to the releases section
+	and download the tarball. In this case I'm using
+	<code>json-path-2.3.0-with-dependencies.tar.gz</code>.
+	Extract it, and copy all the <code>jar</code> files to
+	<code>$PROJECT/userlib</code>. You only need the
+	<code>jar</code> files from <code>lib</code>,
+	<code>lib-optional</code> is ofcourse optional.
+	Let's see how the library works with the following
+	<code>jjs</code> prototype code
+</p>
+<pre><code class="language-java">try{
+ var objjson={
+  "store": {
+   "book": [
+    {
+     "category": "reference",
+     "author": "Nigel Rees",
+     "title": "Sayings of the Century",
+     "price": 8.95
+    },
+    {
+     "category": "fiction",
+     "author": "Evelyn Waugh",
+     "title": "Sword of Honour",
+     "price": 12.99
+    },
+    {
+     "category": "fiction",
+     "author": "Herman Melville",
+     "title": "Moby Dick",
+     "isbn": "0-553-21311-3",
+     "price": 8.99
+    },
+    {
+     "category": "fiction",
+     "author": "J. R. R. Tolkien",
+     "title": "The Lord of the Rings",
+     "isbn": "0-395-19395-8",
+     "price": 22.99
+    }
+   ],
+   "bicycle": {
+    "color": "red",
+    "price": 19.95
+   }
+  },
+  "expensive": 10
+ };
+ var document=com
+ 	.jayway
+	.jsonpath
+	.Configuration
+	.defaultConfiguration()
+	.jsonProvider()
+	.parse(
+		JSON.stringify(objjson)
+	);
+ var author0=new java
+ 	.lang
+	.String(
+		com
+			.jayway
+			.jsonpath
+			.JsonPath
+			.read(
+				document,
+				"$.store.book[0].author"
+			)
+		);
+ var author1=new java
+ 	.lang
+	.String(
+		com
+			.jayway
+			.jsonpath
+			.JsonPath
+			.read(
+				document,
+				"$.store.book[1].author"
+			)
+		);
+ alert(author0+"\n"+author1);
+}catch(e){
+ alert(e);
+}</code></pre>
+<p>
+	From this example is pretty obvious that you take a 
+	<code>java.lang.String</code> JSON, pass it into 
+	<code>parse()</code> and then query the <code>document</code>
+	returned by the function using the <code>read()</code>
+	function.
+</p>
+<p>
+	We can now go on and write a Java action that does this,
+	with the JSON string and query passed in as <code>java.lang.String</code>
+	parameters. One slight issue is the return type. For generality
+	it is perhaps easiest to return the result as a <code>java.lang.String</code>.
+</p>
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+
+

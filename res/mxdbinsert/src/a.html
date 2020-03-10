@@ -1,0 +1,42 @@
+<p>
+	Here we look at doing insert operations into the database using <code>com.mendix.core.Core.dataStorage()</code>
+</p>
+<p>
+	The return type of <code>dataStorage()</code> is <code>com.mendix.datastorage.impl.DataStorageExt</code>, and we can call <code>executeWithConnection()</code> and provide a callback that will provision <code>org.apache.commons.dbcp2.PoolingDataSource</code> which we can use to execute queries by calling <code>prepareStatement(java.lang.String)</code>. For operations like updates and inserts that do not return result sets, we can call <code>execute()</code> on the statement, and for those returning result sets like select statements, we can use <code>executeQuery()</code>.</p>
+<p>
+	It is advisable not to perform these exeperiments on a production database, as it is quite easy to corrupt the data. Try it out locally, and remember to make a backup of your database before starting.
+</p>
+<p>
+	Lets first take a look at deleting rows
+</p>
+<div class="well">
+	<pre>DELETE FROM "PUBLIC"."mymodule$myentity"</pre>
+</div>
+<p>
+	Executing this will ofcourse delete all <code>mymodule$myentity</code> rows. When executing this in the Mendix cloud environment, <code>"PUBLIC"</code> will become <code>"public"</code>. For some reason there is a difference.
+</p>
+<p>
+	Inserting rows is a bit trickier. All Mendix entities have a <i>guid</i>, and this <code>guid</code> actually contains information about the entity itself. The <code>guid</code> its stored in the <code>id</code> field of the table. You can find out more by opening the HSQL Database Manager when running locally. There are some contstraints on the <code>id</code> field. It is of type <code>BIGINT</code>, cannot be <code>NULL</code>, and needs to be unique. For our purposes for now it is fine to skip the special guid signature required by Mendix in order for the runtime to do its type checking and so on. The guid can be manually set as folows in the insert operation:
+</p>
+<div class="well">
+	<pre>INSERT INTO "PUBLIC".mymodule$myentity" ("id","somefield") VALUES ('1234','foo')</pre>
+</div>
+<p>
+	This might not execute properly, but if your lucky a row will have been created. This row will in fact be visible in a grid displaying the type <code>mymodule$myentity</code>, but any attempts to change, commit, or delete that row will result in errors based on the invalidity of the guid that we created. We need to populate the <code>id</code> field according to the requirements of Mendix
+</p>
+<p>
+	An alternative to using manually created <code>id</code> values might be to use <code>java.util.UUID</code>
+</p>
+<div class="well">
+	<pre>'INSERT INTO "PUBLIC".mymodule$myentity" ("id","somefield") VALUES (\''+java.util.UUID.randomUUID().getMostSignificantBits()+'\',\'foo\')'</pre>
+</div>
+<p>
+	This atleast will produce <code>id</code> values that should be unique from one another after many consecutave executions.
+</p>
+<p>
+	The next issue is dealing with the creation of appropriate <code>id</code> values. As an experiment, find the last id of some specific type of object (for example <code>administration$account</code>) in the database that was created using the Mendix runtime API or a microflow (use the database inspector to do this). Take not of the value of that row's <code>id</code> field, increment it, and try and insert a row using SQL. It will probably work if you inserted something of the same type (i.g. <code>adminsitration$account</code>), but will deliver a slightly different error upong change, commit, and delete operations if you used another table (entity type).
+</p>
+<div class="alert alert-danger">The current id belongs to another object type than the given type to set. Type of this MendixObject is 'Foo.bar', the given is is of type 'Baz.qux at Module.microflow...</div>
+<p>
+	<code>com.mendix.core.Core</code> has a few functions involving <code>IMendixIdentifier</code> that might help.
+</p>

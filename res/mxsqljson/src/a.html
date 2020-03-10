@@ -1,0 +1,123 @@
+<p>
+	Here we see how we can convert
+	a <code>dbcp2</code> result
+	set into JSON. For this we
+	will use <code>org.json</code>.
+</p>
+<p>
+	The following <code>jjs</code>
+	prototype can be implemented
+	into a Java action
+</p>
+<pre><code class="language-javascript">//----------------------------------------
+//imports
+//----------------------------------------
+var JSONArray=Java.type('org.json.JSONArray');
+var JSONObject=Java.type('org.json.JSONObject');
+var JSONException=Java.type('org.json.JSONException');
+var SQLException=Java.type('java.sql.SQLException');
+var ResultSet=Java.type('java.sql.ResultSet');
+var ResultSetMetaData=Java.type('java.sql.ResultSetMetaData');
+//----------------------------------------
+//util
+//----------------------------------------
+function rs2json(rs){
+  try{
+    var json=new JSONArray();
+    var rsmd=rs.getMetaData();
+    while(rs.next()) {
+      var numColumns = rsmd.getColumnCount();
+      var obj = new JSONObject();
+      for(var i=1;i&lt;numColumns+1;i++){
+        var column_name = rsmd.getColumnName(i);
+        if(rsmd.getColumnType(i)==java.sql.Types.ARRAY){
+          obj.put(column_name, rs.getArray(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.BIGINT){
+          obj.put(column_name, rs.getLong(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.BOOLEAN){
+          obj.put(column_name, rs.getBoolean(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.BLOB){
+          obj.put(column_name, rs.getBlob(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.DOUBLE){
+          obj.put(column_name, rs.getDouble(column_name)); 
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.FLOAT){
+          obj.put(column_name, rs.getFloat(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.INTEGER){
+          obj.put(column_name, rs.getInt(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.NVARCHAR){
+          obj.put(column_name, rs.getNString(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.VARCHAR){
+          obj.put(column_name, rs.getString(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.TINYINT){
+          obj.put(column_name, rs.getInt(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.SMALLINT){
+          obj.put(column_name, rs.getInt(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.DATE){
+          obj.put(column_name, rs.getDate(column_name));
+        }
+        else if(rsmd.getColumnType(i)==java.sql.Types.TIMESTAMP){
+          obj.put(column_name, rs.getTimestamp(column_name));   
+        }
+        else{
+          obj.put(column_name, rs.getObject(column_name));
+        }
+      }
+      json.put(obj);
+    }
+    return json;
+  }catch(e){
+      alert(e);
+  }
+}
+//----------------------------------------
+//code
+//----------------------------------------
+var ds=com.mendix.core.Core.dataStorage();
+ds.executeWithConnection(
+  function(a){
+    try{
+      var stmnt=a.prepareStatement(
+        new java.lang.String(
+          'SELECT * from "public"."astronomy$hygfull" LIMIT 512'
+        )
+      );
+      var rset=stmnt.executeQuery();
+      alert(rs2json(rset).toString(4));  
+      rset.close();
+    }catch(e){
+      alert(e);
+    }
+  }
+);</code></pre>
+<p>
+	This can easily be converted into a Java action.
+	You can in fact extend your Java action in many ways
+	and add different output formats, like <code>csv</code>,
+	<code>delimited</code>, <code>json</code>, and <code>xml</code>,
+	passed into the action as an <code>enumeration</code> parameter.
+</p>
+<p>
+	One problem with having numerous output formats is what to do
+	if you want to produce multiple output types at the same time.
+	It's both inefficient and inaccurate running the query in multiple
+	passes just to generate different output formats. One solution
+	would be to produce an output in the most descriptive format,
+	for example <code>json</code> or <code>xml</code>, and take
+	that and then do a conversion to the other formats, that way
+	the query only has to run once. For this then you would
+	have to write conversion functions.
+</p>
+<script>
+	Prism.highlightAll()
+</script>

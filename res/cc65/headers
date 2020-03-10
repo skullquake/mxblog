@@ -1,0 +1,5 @@
+accept: application/json
+title: cc65
+status: publish
+type: Post
+image: cc65.png

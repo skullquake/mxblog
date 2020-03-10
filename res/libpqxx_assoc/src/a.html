@@ -1,0 +1,336 @@
+<p>Let's take a look at working with associations with <code>libpqxx</code>, the <code>c++</code> wrapper for working with <code>PostgreSQL</code>. First, the <code>Makefile</code></p>
+<pre><code class="language-javascript">CC=g++
+SRC=./src/a.cpp
+BIN=./bin/a.out
+CXXFLAGS=\
+     `pkg-config --cflags libpqxx`\
+     `pkg-config --cflags libpq`
+LIBS=\
+     `pkg-config --libs libpqxx`\
+     `pkg-config --libs libpq`
+$(BIN): $(SRC)
+	mkdir -p $(@D)
+	$(CC)\
+		$(CXXFLAGS)\
+		$(SRC)\
+		$(LIBS)\
+		-o $(BIN)
+.phony:		\
+	run	\
+	clean 
+run: $(BIN)
+	$(BIN)
+clean:
+	rm -r ./db ./bin</code></pre>
+<h3>One-to-One</h3>
+<p>Here take note of using a <code>nontransact</code> in order to obtain the
+serial via the <code>PostgreSQL</code> <code>returning</code> clause from the result using <code>int serial=R[0][0].as&lt;int&gt;();</code>. Also, in the loops populating relations <code>a</code> and <code>b</code>, the <code>nontransact</code> for relation <code>a</code> is commited prior to commencing duties and comission of the <code>work</code> for relation <code>b</code>.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;pqxx/pqxx&gt;
+using namespace std;
+using namespace pqxx;
+int main(int argc, char* argv[]){
+  std::stringstream buffer;
+  int sza=4;
+  try{
+    connection C(R"(
+      dbname=test
+      user=test
+      password=1
+      hostaddr=127.0.0.1
+      port=6000
+    )");
+    if(!C.is_open()){
+      std::cerr&lt;&lt;"Can't open database"&lt;&lt;std::endl;
+      return 1;
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        drop table if exists a cascade
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        drop table if exists b cascade
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        create table if not exists a(
+          a_id serial primary key,
+          value varchar
+        )
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        create table if not exists b(
+          b_id serial primary key,
+          a_id int unique references a(a_id),
+          value varchar
+        )
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        delete from a
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        insert into a(value) values($1) returning a_id
+      )";
+      C.prepare("ps0",buffer.str().c_str());
+      for(int i=0;i&lt;sza;i++){
+        nontransaction N(C);
+        result R(N.exec_prepared("ps0","ATest"+std::to_string(i)));
+        N.commit();
+        int serial=R[0][0].as&lt;int&gt;();
+        {
+          buffer.str("");
+          buffer&lt;&lt;R"(
+            insert into b(a_id,value) values($1,$2)
+          )";
+          C.prepare("ps1",buffer.str().c_str());
+          work W(C);
+          W.prepared("ps1")(serial)("BTest"+std::to_string(i)).exec();
+          W.commit();
+        }
+      }
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        select
+            a.a_id,
+            a.value,
+            b.b_id,
+            b.value
+        from
+            a
+        left outer join
+            b
+        on
+            a.a_id=b.a_id
+      )";
+      C.prepare("ps2",buffer.str().c_str());
+      nontransaction N(C);
+      result R(N.exec_prepared("ps2"));
+      for(int i=0;i&lt;R.columns();i++){
+        std::cout&lt;&lt;R.column_name(i)&lt;&lt;",";
+      }
+      std::cout&lt;&lt;std::endl&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+      for(result::const_iterator c=R.begin();c!=R.end();++c){
+        std::cout&lt;&lt;c[0].as&lt;int&gt;()&lt;&lt;",";
+        std::cout&lt;&lt;c[1].as&lt;std::string&gt;()&lt;&lt;",";
+        std::cout&lt;&lt;c[2].as&lt;int&gt;()&lt;&lt;",";
+        std::cout&lt;&lt;c[3].as&lt;std::string&gt;();
+        std::cout&lt;&lt;std::endl;
+      }
+      N.commit();
+    }
+    C.disconnect();
+  }catch(const std::exception &e){
+    std::cerr&lt;&lt;e.what()&lt;&lt;std::endl;
+    return 1;
+  }
+  return 0;
+}</code></pre>
+<h3>One-to-Many</h3>
+<p>Very similar to the <i>one-to-one</i> example, but the <code>unique</code> constraint on relation <code>b</code> is dropped and an additional inner loop is employed to populate multiple instances of relation <code>b</code> per instance of relation <code>a</code>. Relations <code>a</code> and <code>b</code> are populated in two passes, with their serial stored in <code>std::vector</code> containers, and then <code>a_b</code> is populated in a seperate pass.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;pqxx/pqxx&gt;
+#include&lt;vector&gt;
+using namespace std;
+using namespace pqxx;
+int main(int argc, char* argv[]){
+  std::stringstream buffer;
+  int sza=4;
+  int szb=4;
+  std::vector&lt;int&gt; vaid;
+  std::vector&lt;int&gt; vbid;
+  try{
+    connection C(R"(
+      dbname=test
+      user=test
+      password=1
+      hostaddr=127.0.0.1
+      port=6000
+    )");
+    if(!C.is_open()){
+      std::cerr&lt;&lt;"Can't open database"&lt;&lt;std::endl;
+      return 1;
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        drop table if exists a cascade
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        drop table if exists b cascade
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        drop table if exists a_b cascade
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    //create a
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        create table if not exists a(
+          a_id serial primary key,
+          value varchar
+        )
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    //create b
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        create table if not exists b(
+          b_id serial primary key,
+          value varchar
+        )
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    //create a_b
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        create table if not exists a_b(
+          a_id int references a(a_id),
+          b_id int references b(b_id)
+        )
+      )";
+      work W(C);
+      W.exec(buffer.str().c_str());
+      W.commit();
+    }
+    //populate a
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        insert into a(value) values($1) returning a_id
+      )";
+      C.prepare("ps0",buffer.str().c_str());
+      for(int i=0;i&lt;sza;i++){
+        nontransaction N(C);
+        result R(N.exec_prepared("ps0","ATest"+std::to_string(i)));
+        N.commit();
+        vaid.push_back(R[0][0].as&lt;int&gt;());
+      }
+    }
+    //populate b
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        insert into b(value) values($1) returning b_id
+      )";
+      C.prepare("ps1",buffer.str().c_str());
+      for(int i=0;i&lt;sza;i++){
+        nontransaction N(C);
+        result R(N.exec_prepared("ps1","BTest"+std::to_string(i)));
+        N.commit();
+        vbid.push_back(R[0][0].as&lt;int&gt;());
+      }
+    }
+    //populate a_b
+    {
+      for(auto aid:vaid){
+        for(auto bid:vbid){
+          buffer.str("");
+          buffer&lt;&lt;R"(
+            insert into a_b(a_id,b_id)values($1,$2) 
+          )";
+          C.prepare("ps2",buffer.str().c_str());
+          work W(C);
+          W.prepared("ps2")(aid)(bid).exec();
+          W.commit();
+
+        }
+      }
+    }
+    {
+      buffer.str("");
+      buffer&lt;&lt;R"(
+        select 
+            a.a_id as a_id,
+            b.b_id as b_id,
+            a.value as aval,
+            b.value as bval
+        from
+            a
+        join
+            a_b
+        on
+            a.a_id=a_b.b_id
+        join
+            b
+        on
+            b.b_id=a_b.b_id
+        ;
+      )";
+      C.prepare("ps3",buffer.str().c_str());
+      nontransaction N(C);
+      result R(N.exec_prepared("ps3"));
+      for(int i=0;i&lt;R.columns();i++){
+        std::cout&lt;&lt;R.column_name(i)&lt;&lt;",";
+      }
+      std::cout&lt;&lt;std::endl&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+      for(result::const_iterator c=R.begin();c!=R.end();++c){
+        std::cout&lt;&lt;c[0].as&lt;int&gt;()&lt;&lt;",";
+        std::cout&lt;&lt;c[1].as&lt;int&gt;()&lt;&lt;",";
+        std::cout&lt;&lt;std::endl;
+      }
+      N.commit();
+    }
+    C.disconnect();
+  }catch(const std::exception &e){
+    std::cerr&lt;&lt;e.what()&lt;&lt;std::endl;
+    return 1;
+  }
+  return 0;
+}</code></pre>
+<script>Prism.highlightAll()</script>

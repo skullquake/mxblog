@@ -1,0 +1,37 @@
+<p>STL <code>rotate</code> performs a left rotation on a range of elements. The following performs a left shift by 1</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+int main(int argc,char** argv){
+  std::vector&lt;int&gt; a={0,1,2,3,4};
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  std::rotate(a.begin(),a.begin()+1,a.end());
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p>In order to perform a right shift, the following serves as illustration</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+int main(int argc,char** argv){
+  std::vector&lt;int&gt; a={0,1,2,3,4};
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  std::rotate(a.begin(),a.begin()+a.size()-1,a.end());
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p>Here for the second parameter we get the last index by adding the vector's size to its
+beginning and subtracting 1</p>
+<script>
+  Prism.highlightAll()
+</script>

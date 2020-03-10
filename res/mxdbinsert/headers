@@ -1,0 +1,5 @@
+accept: application/json
+title: Mx Direct Database Inserts
+status: publish
+type: Post
+image: mendix.png

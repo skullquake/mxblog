@@ -1,0 +1,50 @@
+<p>Test post via curl using the following bash script</p>
+<div class="well"><pre class="code">
+#!/usr/bin/bash
+#--------------------------------------------------------------------------------
+#update.sh
+#--------------------------------------------------------------------------------
+URL="http://localhost:8082/wordpress/wp_posts/post" 
+URL="https://inovosandbox-sandbox.mxapps.io/wp_posts/post"
+DATA=@./src/a.html
+CURL=/usr/bin/curl
+#--------------------------------------------------------------------------------
+#build temp headers including the id from response
+#--------------------------------------------------------------------------------
+printf "id: "&gt;./_headers
+cat ./response|jq -r ".id" &gt;&gt; _headers
+printf "\n"&gt;&gt;_headers
+cat ./headers|while read LINE;do
+	echo $LINE &gt;&gt; ./_headers
+done
+#--------------------------------------------------------------------------------
+#call
+#--------------------------------------------------------------------------------
+$CURL \
+	$URL \
+	-H @_headers \
+	--data $DATA &gt;./response
+cat ./response
+#--------------------------------------------------------------------------------
+#remove temp headers
+#--------------------------------------------------------------------------------
+rm _headers</pre></div>
+<p>
+	The <code>./headers</code> reference is to control the post status, image
+	etc
+</p>
+<div class="well"><pre>accept: application/json
+title: my new post from curl
+status: publish
+type: Post
+image: curl.png</pre></div>
+<p>
+	The webservice always returns the id, and if no id is sent in with the
+	headers, a new post is created. The effect is that running the script
+	consecutively will initially create the post, and thereafter upadte it
+</p>
+<p>
+	One of the advantages of this setup is that you can easily post from the 
+	command line. This was implemented with a simple rest service, but it
+	can probably extended.
+</p>

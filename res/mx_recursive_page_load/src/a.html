@@ -1,0 +1,37 @@
+<p>Let's look at recursive page loading in <code>Mendix</code>. The following <code>JS</code> fragment will serve our discussion.</p>
+<pre><code class="language-javascript">this._rendered=typeof(this._rendered)=='undefined'?false:this._rendered;
+if(this.contextObj!=null&amp;&amp;!this._rendered){
+	this._rendered=true;
+	mx.ui.openForm(
+		"MOD/PAG.page.xml",
+		{
+			location:"node",
+			domNode:this.domNode,
+			context:this.mxcontext,
+			callback:function(form){
+			},
+			error:function(e){
+				console.error(e);
+			}
+		}
+	);	
+}else{
+}</code></pre>
+<p>The above is executed in the context of an <code>HTMLSnippet</code> of the <i>with context</i>
+variant. The widget configuration has <i>Refresh on context change</i> set to <code>true</code>
+and <i>Refresh on context update</i> set to <code>true</code>. Additionally,
+<i>Encokse HTML with DIV</i> is set to false as it is not required.</p>
+<p>The context <code>this</code> refers to the <code>HTMLSnippet</code> instance, so we
+set if not already set (as the above code will execute on refreshes) a setinel to check
+if the contents has been rendered or not. Without such control you will find that the contents
+gets rendered multiple times resulting in duplicates. The other check that is performed is checking
+if the <i>context object</i> is <code>null</code>, and that will fit in when designing the pages
+involved in using this fragment as contained in the <code>HTMLSnippet</code>.</p>
+<p>What are we rendering? We are rendering a page <code>MOD/PAG.page.xml</code> in
+module <code>MOD</code> with the name of <code>PAG</code>. Thats about all there is to this it in terms
+of the <code>JS</code>, next lets take a look at the <code>Mendix</code> pages, data, etc.</p>
+<p>In terms of the data setup, you can have a <code>one-to-one</code> or <code>one-to-many</code> self referrential table in your <code>Mendix</code> domain. The idea is that you want to create a database structure that accomodates some sort of hierarchy. We will have to pages, and <i>entry point</i> page and a page that will serve as a <i>recursive</i> page. For the <i>entry point</i> page you can set up a page that has a <code>template grid</code> retrieving from either database or association the self referrential entity. On this page you also need to add some controls for adding and removing entities and you can put those on the <code>template grid</code> or on the outer <code>data view</code>. Within this <code>template grid</code> you will place the <code>HTMLSnippet</code> as described above. The snippet will be modified in terms of <code>MOD</code> and <code>PAG</code> to match up with the next page we will add.  Then you can set up your <code>recursive</code> page in an empty layout with a data view of the self referrential entity printing out the values in text boxes or edit fields along with a template grid that retrieves via association or <code>xpath</code> the child entities associated via the self association. Within the template areas of the <code>template grid</code> you will place the <code>HTMLSnippet</code> described above. Again you can add controls for adding children, this time on the <code>data view</code>. You can also add a control for removing the entity associated with the context of the outer <code>data view</code>. To think of how to set up these controls you can draw some inspiration from the controls you normally see on comments section you find on various websites.</p>
+<p>So we have two pages, with controls and <code>template-grids</code> each with the <code>HTMLSnippet</code> that loads the <i>recursive</i> page in placed in their <code>template-grids</code>s. The effect is that if there is data retrieved, the page will load itself in, and do so recursively up to the point where there is no more self associated data retrieved.</p>
+<script>
+	Prism.highlightAll()
+</script>

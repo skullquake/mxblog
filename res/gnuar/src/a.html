@@ -1,0 +1,96 @@
+<p>
+	GNU <code>ar</code> is commonly used to
+	create static archives for libraries
+	compiled for example with <code>gcc</code>
+	or <code>g++</code>. It can also
+	modify as well as extract archives.
+</p>
+<p>
+	The archive entries maintain the original
+	permissions, timestamps, etc., and all
+	this kind of meta data will be restored
+	upon extraction.
+</p>
+<p>
+	Depending on the target system <code>ar</code>
+	was built for, there may be restrictions 
+	on the entry names, for example the length
+	and the type of characters that may be used
+	for them.
+</p>
+<p>
+	<code>ar</code> is maintained with
+	<code>binutils</code> because it is used
+	for archiving relocatable object modules,
+	and is thus related to binary executable
+	artifacts. It maintains an index related
+	to the relocatable objects stored in it
+	that speeds up the linking process when
+	compiling a program.
+</p>
+<p>
+	<code>ar</code> is commonly incorporated into
+	build systems, such as the following
+	<code>makefile</code>, in order to create
+	static libraries
+</p>
+<pre><code class="language-makefile">CC=gcc
+APPSRC=./src/a.c
+APPOBJ=./bin/a.o
+APPBIN=./bin/a.out
+LIBSRC=./src/b.c
+LIBOBJ=./bin/b.o
+LIB=./lib/libb.a
+CFLAGS=-I./include
+all:$(APPBIN)
+$(APPBIN): $(APPSRC) $(LIB)
+	gcc $(CFLAGS) -L./lib $(APPSRC) -lb -o $(APPBIN)
+$(LIBOBJ): $(LIBSRC)
+	gcc $(CFLAGS) $(LIBSRC) -c -o $(LIBOBJ)
+$(LIB): $(LIBOBJ)
+	ar rcs $(LIB) $(LIBOBJ)
+.phony:clean
+clean:
+	rm $(BIN) $(BINOBJ) $(LIB) $(LIBOBJ)</code></pre>
+<p>
+	The relevant line is
+	<code>ar rcs $(LIB) $(LIBOBJ)</code>,
+	which takes a single object and puts
+	it into an archive. The common extension
+	for a static archive is <code>.a</code>
+</p>
+<p>
+	To print the contents of an archive, you
+	can use <code>ar t</code> followed by
+	the path to the archive.
+</p>
+<p>
+	In the example <code>makefile</code>,
+	<code>ar rcs $(LIB) $(LIBOBJ)</code>
+	uses <code>r</code> to insert a file member
+	int the archive, <code>c</code> to create
+	the arcvhive if it does not exist, and
+	<code>s</code> specifies that
+	an object-file index is to be written or
+	updated in the archive. There are a few
+	other flags that you can read up on
+	by checking out the manual page for
+	<code>ar</code> by running <code>man ar</code>,
+	or checking out the <code>binutils</code>
+	documentation.
+</p>
+<p>
+	To get more verbose output, you can use
+	the <code>v</code> character, for example
+	for a verbose listing, you can use the
+	following
+</p>
+<pre><code class="language-makefile">ar tv ./lib/liba</code></pre>
+<p>
+	This will produce output similar to
+	<code>ls -l</code>, as in the following
+</p>
+<pre><code class="language-makefile">rw------- 10184/10184   1112 Feb 25 19:58 2019 b.o</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

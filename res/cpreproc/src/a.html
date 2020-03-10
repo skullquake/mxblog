@@ -1,0 +1,156 @@
+<p>
+	<code>cpp</code> is the <code>c</code> preprocssor.
+	It includes header files, does macro expansion,
+	conditional compilation and line processing.
+	When you use the <code>gcc</code> front end
+	to compile your <code>c</code> programs,
+	<code>gcc</code> is used in the sequence of
+	steps taken to produce your binaries or
+	objects.
+</p>
+<p>
+	The <code>cpp</code> directives are weakly related to the
+	<code>c</code> language, which means you can use it to
+	process other types of files, not necessarily
+	<code>c</code> source files.
+</p>
+<p>
+	The following <code>makefile</code> uses <code>cpp</code>
+	explicitly to produce an intermediate for compilation
+	and assembly.
+</code>
+<pre><code class="language-makefile">CC=gcc
+SRC=./src/a.c
+SRCPREPROCESSED=./src/a.i
+ASMSRC=./src/a.S
+OBJ=./bin/a.o
+BIN=./bin/a.out
+all: $(BIN)
+$(SRCPREPROCESSED): $(SRC)
+	$(CC) $(SRC) -E -o $(SRCPREPROCESSED)
+$(ASMSRC): $(SRCPREPROCESSED)
+	$(CC) $(SRCPREPROCESSED) -S -o $(ASMSRC)
+$(OBJ): $(ASMSRC)
+	$(CC) $(ASMSRC) -c -o $(OBJ)
+$(BIN): $(OBJ)
+	$(CC) $(OBJ) -o $(BIN)
+.phony:clean
+clean:
+	rm $(BIN) $(OBJ) $(ASMSRC) $(SRCPREPROCESSED)</code></pre>
+<p>
+	The file <code>./src/a.i</code> will be quite extensive
+	with all the preprocessor directives expanded
+</p>
+<pre><code class="language-c"># 1 "./src/a.c"
+...
+typedef long int ptrdiff_t;
+...
+int main(int argc,char** argv){
+...
+}</code></pre>
+<p>
+	<code>c</code> compilation consists of eight phases, and the
+	job of the <code>preprocessor</code> is defined in the first 
+	four of those phases.
+</p>
+<h3>
+	#include
+</h3>
+<p>
+	There are numerous preprocessor directives that are meant to
+	be handled by <code>cpp</code>, the most common is
+	<code>#include</code>.
+</p>
+<p>
+	<code>cpp</code> is commonly used to include other files, normally
+	headers with function declarations and constants. If you take a look
+	at some of the header files in <code>/usr/include</code> you'll
+	see that they can also include other header files.
+</p>
+<p>
+	In the above example <i>hello world</i>, the <code>printf</code>
+	function is declared in <code>stdio.h</code>, located at 
+	<code>/usr/include/stdio.h</code>, and included via the proprocessor
+	by using the <code>#include</code> preprocessor directive.
+	Instead of using <code>&lt;</code> and <code>&gt;</code>
+	characters with <code>#include</code>, we can use <code>"</code>
+	characters. When using the chevrons, it implies that the
+	file to be included will be searched for in the standard
+	compiler include paths, whereas if the double quotes are used
+	the file will searched for in the local include directories,
+	which will be the <code>cwd</code> and any optional directories
+	as specified by the <code>-I</code> flag passed to the
+	front-end (<code>gcc</code>) or by specific environmental variables.
+</p>
+<p>
+	When including files, you run the risk of including them multiple
+	times which may result in errors further down the line. 
+	<code>#pragma once</code> can be used to prevent this, or more
+	commonly the following
+</p>
+<pre><code class="language-c">#ifndef FOO_H
+#define FOO_H
+...
+#endif</code></pre>
+<p>
+	<code>#pragma</code>, <code>#ifndef</code>, and <code>#define</code>
+	are example of some more preprocessor directives specifically
+	handled by <code>cpp</code> in the compilation process.
+</p>
+<p>
+	Conditional compilation can be facilitated with the <code>#if</code>
+	and <code>#endif</code> preprocessor directives. You'll be
+	interested in using these for example if you want have a programming
+	with logging for debug purposes and want to be able to turn
+	the debugging statements on or off
+</p>
+<pre><code class="language-c">#if _DEBUG
+	printf("i:%d\n",i);
+#endif</code></pre>
+<p>
+	You can add the definition for <code>DEBUG</code> somewhere
+	in the source code using <code>#define DEBUG</code> or as
+	a flag to the compiler, for example <code>gcc -DDEBUG</code>.
+</p>
+<p>
+	You also need this sort of control if you're writing multiplatform
+	source code, for example dealing with <code>osx</code>,
+	<code>linux</code>, <code>windows</code>, etc. There are some
+	standard things defined by the front end/compiler, and among
+	these are definitions for the operating system, for example
+	<code>#define WIN32</code> will be automatically there if you
+	are using a <code>_WIN32</code> compiler like <code>mingw</code>
+	which you can use in your source code for this sort of thing
+	without explicitly having to add it somewhere else.
+</p>
+<h3>
+	macro expansion
+</h3>
+<p>
+	Macros are pieces of source code handled by the preprocessor
+	which for example substitues sections of it, almost like templating.
+	You can <i>function like</i> macros and <i>object-like</i> macros.
+	The basic syntax is as follows
+</p>
+<pre><code class="language-c">//function like
+#define &lt;identifier&gt;(&lt;parameter list&gt;) &lt;replacement token list&gt;
+//object-like
+#define &lt;identifier&gt; &lt;replacement token list&gt;</code></pre>
+<p>
+	Distribution of whitespace is relevant in these two forms
+	and should be adhered to, the important part being that in
+	the <i>function-like</i> macro there is no space between
+	<code>identifier</code> and the <code>(</code> character.
+</p>
+<p>
+	An example of a <i>function-like</i> macro might be as follows
+</p>
+<pre><code class="language-c">#define RADTODEG(x) ((x)*57.29578)</code></pre>
+<p>
+	The <i>function-like</i> macros are used often to create more
+	efficient code, as there is no function call overhead
+	with the inline substituting performed by the preprocessor.
+</p>
+<script>
+	Prism.highlightAll()
+</script>

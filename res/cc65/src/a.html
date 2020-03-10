@@ -1,0 +1,191 @@
+<p>
+	<code>cc65</code> is a cross development package for the 
+	<code>65(C)02</code> systems. It includes a macro assembler,
+	C compiler, linker, librarian and some other tools. The following
+	targets are supported
+</p>
+<ul>
+	<li>
+		VIC20
+	</li>
+	<li>
+		C16/C116 and Plust/4
+	</li>
+	<li>
+		C128
+	</li>
+	<li>
+		CBM 510/P5000
+	</li>
+	<li>
+		600/700 family
+	</li>
+	<li>
+		Newer PET models
+	</li>
+	<li>
+		Apple ][+
+	</li>
+	<li>
+		Atari 8 bit machines
+	</li>
+	<li>
+		Atari 2600 console
+	</li>
+	<li>
+		Atari 5200 console
+	</li>
+	<li>
+		C64/C128/Apple //e GEOS
+	</li>
+	<li>
+		Bit Corporation Gamate console
+	</li>
+	<li>
+		NEC PC-Engine/TurboGrafx-16 console
+	</li>
+	<li>
+		NES
+	</li>
+	<li>
+		Watara Supervision console
+	</li>
+	<li>
+		VTech Creativision console
+	</li>
+	<li>
+		Oric Atmos
+	</li>
+	<li>
+		Oric Telestrat
+	</li>
+	<li>
+		Lynx console
+	</li>
+	<li>
+		Ohio Scientific Challanger 1P
+	</li>
+</ul>
+<p>
+	The first step is to grab the source code from
+	<a href="https://github.com/cc65/cc65">cc65/cc65</a>
+	and compile the tools for your platform
+</p>
+<pre><code class="language-bash">wget https://github.com/ccc65/cc65/archive/V2.18.tar.gz
+tar xf ./V2.18.tar.gz
+cd cc65-2.18
+make -fMakefile
+PREFIX=/usr -fMakefile install</code></pre>
+<p>
+	This should work under <code>*nix</code> and <code>cygwin</code>.
+	The main binaries to work with are the following
+</p>
+<ul>
+	<li>
+		<code>ar65</code> - archiver
+	</li>
+	<li>
+		<code>ca65</code> - macro assembler
+	</li>
+	<li>
+		<code>cc65</code> - c compiler
+	</li>
+	<li>
+		<code>co65</code> - object file converter
+	</li>
+	<li>
+		<code>da65</code> - disassembler
+	</li>
+	<li>
+		<code>grc</code> - GEOS resource compiler
+	</li>
+	<li>
+		<code>ld65</code> - linker
+	</li>
+</ul>
+<p>
+	The build process works as follows. Assume you have
+	<code>a.c</code>, a <code>c</code> source file.
+	<code>cc65</code> will compile this to <code>a.s</code>,
+	and assembly language source. <code>a.s</code> will be
+	assembled into <code>a.o</code>, an object file. Finally
+	<code>ld65</code> will compile the binary image from <code>a.o</code>
+</p>
+<p>
+	the <code>cc65</code> can be used in the following way to
+	create the assembler source
+</p>
+<pre><code class="language-bash">cc65 -O -t c64 a.c</code></pre>
+<p>
+	This will target <code>c64</code> and create <code>a.s</code>
+	from <code>a.c</code>. This assembler source can then be 
+	assembled into a relocatable object as follows
+</p>
+<pre><code class="language-bash">ca65 a.s
+ca65 -t c64 text.s</code></pre>
+<p>
+	Your basic source tree will look something like the following
+</p>
+.
+<pre><code class="language-bash">├── a.txt
+├── bin
+├── Makefile
+└── src
+    ├── a.c
+    └── text.s</code></pre>
+<p>
+	The <code>Makefile</code> might look something like this
+</p>
+<pre><code class="language-makefile">CC=/usr/bin/cc65
+AS=/usr/bin/ca65
+LN=/usr/bin/ld65
+SRC=./src/a.c
+SRCASM=./src/a.s
+SRCOBJ=./bin/a.o
+TXTASM=./src/text.s
+TXTOBJ=./bin/text.o
+BIN=./bin/a
+$(BIN):$(SRCOBJ) $(TXTOBJ)
+	$(LN) -t c64 $(SRCOBJ) $(TXTOBJ) c64.lib -o $(BIN)
+$(SRCOBJ):$(SRCASM)
+	$(AS) $(SRCASM) -o $(SRCOBJ)
+$(SRCASM):$(SRC)
+	$(CC) -t c64 $(SRC) -o $(SRCASM)
+$(TXTOBJ):$(TXTASM)
+	$(AS) $(TXTASM) -o $(TXTOBJ)
+.phony:clean
+clean:
+	rm $(SRCASM) $(SRCOBJ) $(TXTOBJ) $(BIN)</code></pre>
+<p>
+	All the supported targets have their own <i>runtime library</i>,
+	in this case <code>c64.lib</code>, which is deployed at
+	<code>/usr/share/cc65/lib/c64.lib</code>. The <code>cc65</code>
+	binaries knows where to look for this file so you don't need
+	to specify the explicit path. The source file <code>./src/a.c</code>
+	might look like this
+</p>
+<pre><code class="language-c">#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&lt;
+extern const char text[];/*In text.s*/
+int main(void){
+    printf("%s\n",text);
+    return EXIT_SUCCESS;
+}</code></pre>
+<p>
+	<code>./src/text.s</code> might look like this
+</p>
+<pre><code class="language-assembly">.export _text
+_text:  .asciiz "Hello world!"</code></pre>
+<pre><code class="language-bash">./bin/a:      data
+./bin/a.o:    xo65 object, version 17, no debug info
+./bin/text.o: xo65 object, version 17, no debug info</code></pre>
+<p>
+	<code>./bin/a</code> is our final output binary that we
+	can run on our target system which you can run on the system
+	or in an emulator, in this case using <code>vice</code>
+</p>
+<pre><code class="language-bash">/opt/vice/x64 ./a</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+

@@ -1,0 +1,169 @@
+<p>Let's take a look at <code>std::map</code>, an associative container for storing pairs where the key is unique. To use this, include <code>map</code>.</p>
+<h3>Basics</h3>
+<p>Important functions associated with it include the following:</p>
+<ul>
+  <li>
+    <code>begin()</code>: First element iterator
+  </li>
+  <li>
+    <code>end()</code>: Last element iterator
+  </li>
+  <li>
+    <code>size()</code>: Total number of elements 
+  </li>
+  <li>
+    <code>max_size()</code>: Maximum number of elements container can hold
+  </li>
+  <li>
+    <code>insert()</code>: Insert an item.
+  </li>
+  <li>
+    <code>erase()</code>: Remove an item.
+  </li>
+  <li>
+    <code>empty()</code>: Returns whether the set is empty.
+  </li>
+</ul>
+<p>Here's a basic example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;map&gt;
+#include&lt;functional&gt;
+int main(int argc,char** argv){
+  {
+    std::map&lt;std::string,std::string&gt; a;
+    for(int i=0;i&lt;8;i++){
+      a.insert(
+        std::pair&lt;std::string,std::string&gt;(
+          "k"+std::to_string(i),
+          "v"+std::to_string(i)
+        )
+      );
+    }
+    for(auto b:a){
+      std::cout
+        &lt;&lt;b.first
+        &lt;&lt;":"
+        &lt;&lt;b.second
+        &lt;&lt;std::endl
+      ;
+    }
+  }
+  {
+    //find
+    std::map&lt;std::string,std::string&gt; a;
+    for(int i=0;i&lt;8;i++){
+      a.insert(
+        std::pair&lt;std::string,std::string&gt;(
+          "k"+std::to_string(i),
+          "v"+std::to_string(i)
+        )
+      );
+    }
+    if(a.find("k1")!=a.end()){
+      std::cout&lt;&lt;"a[\"k1\"]:"&lt;&lt;a["k1"]&lt;&lt;std::endl;
+    }else{
+      std::cerr&lt;&lt;"a[\"k1\"] not found"&lt;&lt;std::endl;
+    }
+  }
+  return 0;
+}</code></pre>
+<h3>Examples</h3>
+<p>You can store other types as the second in the pair, for example a <code>lambda</code> to create a simple menu</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;map&gt;
+#include&lt;functional&gt;
+int main(int argc,char** argv){
+  {
+    //simple menu
+    bool done=false;
+    std::map&lt;std::string,std::function&lt;void(void)&gt;&gt; a;
+    a.insert(
+      std::pair&lt;
+        std::string,
+        std::function&lt;void(void)&gt;
+      &gt;(
+        "1",
+        [=](){
+          std::cout&lt;&lt;"Option 1 chosen"&lt;&lt;std::endl;
+        }
+      )
+    );
+    a.insert(
+      std::pair&lt;
+        std::string,
+        std::function&lt;void(void)&gt;
+      &gt;(
+        "2",
+        [=](){
+          std::cout&lt;&lt;"Option 2 chosen"&lt;&lt;std::endl;
+        }
+      )
+    );
+    a.insert(
+      std::pair&lt;
+        std::string,
+        std::function&lt;void(void)&gt;
+      &gt;(
+        "q",
+        [&amp;](){
+          std::cout&lt;&lt;"Quitting"&lt;&lt;std::endl;
+          done=true;
+        }
+      )
+    );
+    std::cout&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+    std::cout&lt;&lt;"Menu"&lt;&lt;std::endl;
+    std::cout&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+    while(!done){
+      int idx=0;
+      for(auto b:a){
+        std::cout
+          &lt;&lt;idx++
+          &lt;&lt;". "
+          &lt;&lt;b.first
+          &lt;&lt;std::endl
+        ;
+      }
+      std::string selection;
+      std::cin&gt;&gt;selection;
+      if(a.find(selection)!=a.end()){
+        a[selection]();
+      }else{
+        std::cerr&lt;&lt;"Invalid options"&lt;&lt;std::endl;
+      }
+
+    }
+  }
+  {
+    //map of string and lambda
+    std::map&lt;std::string,std::function&lt;void(void)&gt;&gt; a;
+    for(int i=0;i&lt;8;i++){
+      a.insert(
+        std::pair&lt;
+          std::string,
+          std::function&lt;void(void)&gt;
+        &gt;(
+          "k"+std::to_string(i),
+          [=](){
+            std::cout&lt;&lt;"lambda "&lt;&lt;i&lt;&lt;std::endl;
+          }
+        )
+      );
+    }
+    for(auto b:a){
+      std::cout
+        &lt;&lt;b.first
+        &lt;&lt;std::endl
+      ;
+      b.second();//call lambda
+      std::cout&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+    }
+  }
+  return 0;
+}</code></pre>
+<p>In the above we store as key the value to be entered by the user, and as value a <code>lambda</code> to be executed if that key was found.</p>
+<p>For a webserver with multiple <code>PostgreSQL</code> database connections, the following serves as another example. Here the database connections are stored agains <i>aliases</i> (keys of the map). When the rest call comes in, an optional <code>alias</code> value is sent in to determine which database to use.</p>
+<script>
+  Prism.highlightAll()
+</script>
+

@@ -1,0 +1,33 @@
+<p>You can use <code>Python</code> modules like <code>math</code>, <code>time</code>, <code>calendar</code> with <code>pybind11</code>. The usual practice if you want to use modules from <code>pypi</code> is to set up a <i>virtualenv</i> using <code>virtualenv</code> or some other tool. An isolated environment is then created within the current directory that can be entered using <code>source ./bin/activate</code> and left using <code>deactivate</code>.</p>
+<p>When using the interpreter within a c++ program with <code>pybind11</code> you can set up a <i>virtualenv</I> in the same directory as your <code>c++</code> sources and activate it as described before and then install modules locally using <code>pip</code> and then use them in the interpreter. Here we look at doing so</p>
+<pre><code class="language-bash">virtualenv ./
+source ./bin/activate
+pip install numpy</code></pre>
+<p>To call <code>numpy</code> functions, the following serves as illustration</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;pybind11/embed.h&gt;
+namespace py = pybind11;
+using namespace py::literals;
+int main(int argc,char** argv){
+	pybind11::scoped_interpreter guard{};
+	pybind11::module m=pybind11::module::import("__main__");
+	pybind11::object s=m.attr("__dict__");
+	//script
+	pybind11::exec(
+		R"(
+import numpy
+print(numpy.arange(5,30,2))
+		)",
+		s
+	);
+	//api
+	for(auto a:pybind11::module::import("numpy").attr("arange")(5,30,2)){
+		std::cout&lt;&lt;pybind11::cast&lt;int&gt;(a)&lt;&lt;" ";
+	}
+	std::cout&lt;&lt;std::endl;
+	return 0;
+}</code></pre>
+<p>There are two different ways of importing and using modules, either directly via the interpreted <code>Python</code> or by using the <code>pybind11</code> api calls. With the <i>virtualenv</i> activated the executing program should be able to pick up <code>numpy</code>, import it, and call <code>numpy.arange</code></p>
+<script>
+	Prism.highlightAll()
+</script>

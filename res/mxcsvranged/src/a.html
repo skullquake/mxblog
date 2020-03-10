@@ -1,0 +1,181 @@
+<p>
+	Often times strange free form or aggregate delimited files
+	needs to be processed to populate the Mendix domain.
+	Examples may include the following. These files have usually
+	have different sections with the compound data existing
+	in the flat delimited file
+</p>
+<pre><code class="language-csv">name,surname,ssoc
+john,doe,00000000
+city,state,department
+washington,washington d.c.,research and development</code></pre>
+<p>
+	This is a very simple example, but it can get quite
+	complex with various sections of varying length.
+	If, however, the length is fixed, we can parse these
+	sort of files into our database, but we need to implement
+	some utility functions
+</p>
+<p>
+	The first function we need is just something to get the
+	number of lines. It is perhaps better to implement this
+	as something that operates on a <code>java.lang.String</code>
+	as follows
+</p>
+<pre><code class="language-java">return str.split(
+	"\r\n|\r\n"
+).length;</code></pre>
+<p>
+	Quite simple, but quite necessary. You can use this
+	to verify that your <code>java.lang.String</code>
+	to be deconstructed for population into tables
+	is of the correct dimension
+</p>
+<p>
+	A second very useful function is something that
+	takes the <code>java.lang.String</code> you want to
+	use to populate your database and get a specific
+	range of lines from that value. For that we can use the
+	following
+</p>
+<pre><code class="language-java">...
+return java.lang.String.join(
+	"\n",
+	this.subArray(
+		str.split(
+			"\\r"\\n"
+		),
+		beg,
+		end
+	)
+)
+...
+public static&lt;T&gt; T[] subArray(
+	T[] array,
+	int beg,
+	int end,
+){
+	return java.util.Arrays.copyOfRange(
+		array,
+		beg,
+		end
+	);
+}
+...</code></pre>
+<p>
+	This will allow us to get a section from our
+	csv, for example section 1
+</p>
+<pre><code class="language-csv">name,surname,ssoc
+john,doe,00000000</code></pre>
+<p>
+	And section 2
+</p>
+<pre><code class="language-csv">city,state,department
+washington,washington d.c.,research and development</code></pre>
+<p>
+	At this point we can isolate the sections and then parse
+	the csv into Mendix objects. It would be very useful
+	to have a utility function that can do this for us 
+	in an automated way.
+</p>
+<p>
+	Some of the things we want to parameterize in such a function
+	includes the following
+</p>
+<ul>
+	<li>
+		<code>delimiter</code>
+	</li>
+	<li>
+		<code>csv string</code>
+	</li>
+	<li>
+		<code>table type</code>
+	</li>
+</ul>
+<p>
+	Due to some Mendix idiosynchrasies, we cannot
+	dynamically specify a return type. In order
+	to dynamically populate a list of return values
+	we can reflect into the current microflow action and
+	populate an existing list with objects of the type
+	specified in the Java action
+</p>
+<p>
+	The main purpose of this Java action is to take a 
+	<code>java.lang.String</code> of delimited data,
+	split it into records, which consists of fields,
+	then iterate through the records, starting at the second
+	record, instantiate an <code>IMendixObject</code> of 
+	the type specified in the parameter, then use the first
+	record as its guide to set fields in the instantiated
+	<code>IMendixObject</code> with values from
+	the record being iterated through.
+</p>
+<p>
+	It is quite important that the names of the fields
+	in our target table match the names of the fields
+	in the first line of the CSV string. We can
+	implement something that <i>attempts</i> to set
+	the value using the <code>setValue()</code> method
+	of <code>IMendixObject</code>. There are quite a few
+	things that can fail, and we should add error handling where
+	we can. For our initial result we just want it to at
+	least populate some fields for us to see that entities
+	have been created and populated.
+</p>
+<pre><code class="language-javascript">  // BEGIN USER CODE
+  java.util.List&lt;java.util.List&lt;java.lang.String&gt;&gt; records = new java.util.ArrayList&lt;&gt;();
+  java.lang.String COMMA_DELIMITER=str_delimiter;
+  java.util.Stack&lt;com.mendix.core.actionmanagement.CoreAction&lt;?&gt;&gt; astack=getContext().getActionStack();
+  try{
+   java.io.BufferedReader br=new java.io.BufferedReader(new java.io.StringReader(str_csv));
+   java.lang.String line;
+   while((line=br.readLine())!=null) {
+    java.lang.String[] values=line.split(COMMA_DELIMITER);
+    records.add(java.util.Arrays.asList(values));
+   }
+   for(int ridx=1;ridx&lt;records.size();ridx++){
+    try{
+     com.mendix.systemwideinterfaces.core.IMendixObject obj=com.mendix.core.Core.instantiate(
+      this.getContext(),
+      str_objtyp
+     );
+     for(int hdridx=0;hdridx&lt;records.get(0).size();hdridx++){
+      try{
+       obj.setValue(
+        this.getContext(),
+        records.get(0).get(hdridx),
+        records.get(ridx).get(hdridx)
+       );
+      }catch(Exception e){
+       com.mendix.core.Core.getLogger(this.toString()).error(e);
+      }
+     }
+     java.lang.reflect.Method method;
+     try{
+      method = astack.get(2).getClass().getMethod("getVariable",java.lang.String.class);
+      try{
+       java.util.List&lt;com.mendix.systemwideinterfaces.core.IMendixObject&gt; lst=(java.util.ArrayList&lt;com.mendix.systemwideinterfaces.core.IMendixObject&gt; )method.invoke(astack.get(2),str_varnam);
+       lst.add(obj);
+      }catch(Exception e){com.mendix.core.Core.getLogger(this.toString()).error(e);}
+     }catch (Exception e) {com.mendix.core.Core.getLogger(this.toString()).error(e);}
+    }catch(Exception e){
+     com.mendix.core.Core.getLogger(this.toString()).error(e);
+    }
+   }
+   return true;
+  }catch(Exception e){
+   com.mendix.core.Core.getLogger(this.toString()).error(e);
+   return false;
+  }
+  // END USER CODE</code></pre>
+<p>
+	The above code does just that, and populates a specific
+	type into a list in the calling microflow
+</p>
+<script>
+	Prism.highlightAll()
+</script>
+

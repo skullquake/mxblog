@@ -1,0 +1,50 @@
+<p>Here we'll look at setting up an <code>apache</code> server in <code>termux</code> Let's look at installing <code>LAMPP</code></p>
+<h5>LAMPP</h5>
+<pre><code class="language-javascript">pkg update
+pkg upgrade
+pkg install php-apache</code></pre>
+<p>This will install <code>httpd</code> and <code>php</code>. Of relevance is <code>/data/data/com.termux/files/usr/libexec/apache2/libphp7.so</code>, the <code>php</code> module. We need to adjust <code>/data/data/com.termux/files/usr/etc/apache2/httpd.conf</code> to tell <code>httpd</code> to use it as follows</p>
+<pre><code class="language-javascript">...
+LoadModule php7_module /data/data/com.termux/files/usr/libexec/apache2/libphp7.so
+...
+&lt;FilesMatch \.php$&gt;
+	SetHandler application/x-httpd-php
+&lt;/FilesMatch&gt;
+...</code></pre>
+<p>Create a simple test script at <code>/data/data/com.termux/files/usr/share/apache2/default-site/htdocs/index.php</code></p>
+<pre><code class="language-javascript">&lt;?php phpinfo(); ?&gt;</code></pre>
+<p>Start the server as follows</p>
+<pre><code class="language-javascript">apachectl start</code></pre>
+<p>You can test as follows</p>
+<pre><code class="language-javascript">curl http://localhost:8080/index.php</code></pre>
+<p>To associate <code>index.php</code> as the default server page add the following to<code>httpd.conf</code></p>
+<pre><code class="language-javascript">...
+&lt;IfModule dir_module&gt;
+	DirectoryIndex index.php
+&lt;/IfModule&gt;
+...</code></pre>
+<p>Stop and restart the server using the following</p>
+<pre><code class="language-javascript">apachectl stop&amp;&amp;apachectl start</code></pre>
+<p>Test using the following</p>
+<pre><code class="language-javascript">curl http://localhost:8080</code></pre>
+<p><code>index.php</code> should now be executed if it is in the folder being browsed</p>
+<h5>CGI</h5>
+<p>If you take a look in <code>/data/data/com.termux/usr/libexec/apache2</code> you'll see some shared objects. We need to edit <code>httpd.conf</code> to enable some things to get CGI working</p>
+<pre><code class="language-javascript">...
+&lt;IfModule !mpm_prefork_module&gt;
+        LoadModule cgid_module libexec/apache2/mod_cgid.so
+&lt;/IfModule&gt;
+&lt;IfModule mpm_prefork_module&gt;
+        LoadModule cgi_module libexec/apache2/mod_cgi.so
+&lt;/IfModule&gt;
+...</code></pre>
+<p>You can restart the server using <code>apachectl restart</code> and the CGI module should be enabled. It should run scripts located at <code>/data/data/com.termux/files/usr/lib/cgi-bin</code>. There are already some test scripts in there, and you can test it out with</p>
+<pre><code class="language-javascript">curl http://localhost:8080/cgi-bin/test-cgi</code></pre>
+<p>Execution permissions are important, so if you are creating files to be executed, ensure executability with <code>chmod +x ./somefile</code>, and also ensure that the correct shebang interpreter is specified</p>
+<script id="asciicast-RDIJdFo1xXZR0Id42u2TFYInl" src="https://asciinema.org/a/RDIJdFo1xXZR0Id42u2TFYInl.js" async></script>
+
+
+<script>
+	Prism.highlightAll()
+</script>
+

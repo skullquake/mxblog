@@ -1,0 +1,145 @@
+<p>
+	For a recent request handler exposing
+	operating system features, I needed
+	a convenient utility to operate the
+	endpoint using a command line utility.
+</p>
+<p>
+	Then endpoint accomodates <code>GET</code>
+	as well as <code>POST</code> methods
+	to execute host operating system commands
+</p>
+<p>
+	The process is configured using url
+	arguments, for example the following
+</p>
+<pre><code class="language-text">/os?cmd=ls</code></pre>
+<p>
+	This will execute <code>ls</code> in some
+	current working directory and print out
+	a directory listing in the response. The
+	arguments to the command may be specified
+	as follows
+</p>
+<pre><code class="language-text">/os?cmd=lsampargs=-l%20/usr/bin</code></pre>
+<p>
+	This will execute <code>ls</code> to print
+	out verbose information on the entries
+	in <code>/usr/bin</code>
+</p>
+<p>
+	The <code>POST</code> method is also
+	supported, and the bahavior then
+	is exactly the same with the additional
+	feature of the request body being
+	written the standard input stream
+	of the process, for example, the following
+	<code>curl</code> invocation will perform
+	a <code>grep</code> for the string foo
+</p>
+<pre><code class="language-bash">printf "\
+foo\n\
+bar\n\
+baz\n\
+"|curl -F file=@- $HOT/os?cmd=grep&amp;args=foo</code></pre>
+<p>
+	This all works fine when testing it in
+	the browser, but it would be much more
+	convenient to have some command line 
+	program that helps out. The following
+	<code>python</code> script did just that
+</p>
+<pre><code class="language-python">#!/data/data/com.termux/files/usr/bin/python3
+import urllib.request as urllib2;
+import urllib;
+import sys;
+def main(argv):
+    args='';
+    sep=' ';
+    cmd=''
+    if len(argv)&gt;1:
+        cmd=argv[1]
+    else:
+        print('No command specified');
+        return
+    cmd=urllib2.quote(cmd)
+    args=[]
+    if len(argv)&gt;2:
+        args=sep.join(argv[2:]);
+        args=urllib2.quote(args)
+    prot='https://';
+    host='somesandbox.mxapps.io';
+    port=443;
+    endp='/os';
+    url=prot+host+':'+str(port)+endp+'?cmd='+cmd;
+    if len(args)&gt;0:
+        url+='&amp;args='+args;
+    if sys.stdin.isatty():
+        req=urllib2.Request(url);
+        response=urllib2.urlopen(req);
+    else:
+        data=sys.stdin.buffer;
+        #req=urllib2.Request(url,data)
+        req=urllib2.Request(url)
+        req.add_header('Cache-Control','no-cache');
+        req.add_header('Content-Type','application/octet-stream');
+        response=urllib2.urlopen(req,data);
+    print(response.read().decode());
+if __name__ == "__main__":
+	main(sys.argv)</code></pre>
+<p>
+	With this utility, <code>mxsh</code>,
+	installed in <code>/usr/bin</code> you
+	can then simply use invocation like the
+	following
+</p>
+<pre><code class="language-bash">mxsh ls /usr/bin</code></pre>
+<p>
+	Though piping is not supported internally,
+	you can effectively (although inefficiently)
+	pipe contents through consecutive invocations
+	and local piping
+</p>
+<pre><code class="language-bash">mxsh ls /usr/bin|mxsh grep gcc</code></pre>
+<p>
+	The <code>python</code> shebang is specified
+	as <code>#!/data/data/com.termux/files/usr/bin/python3</code> because I'm using termux to run this
+	off an Android phone, which makes it
+	all pretty convenient.
+</p>
+<p>
+	Though the script is not perfect (I am
+	by no means proficient in
+	<code>python</code>), some effort was put
+	into handling <code>stdin</code>,
+	specifically binary data.
+</p>
+<p>
+	Some <i>internal</i> commands are also
+	provisioned by this rudimentary request
+	handler in the form of a <code>&gt;</code>
+	as well as a <code>&gt;&gt;</code> command
+	that requires a single argument, which is 
+	a path on the disk. The following will
+	write <code>stdin</code> to
+	<code>/tmp/foo.txt</code>
+</p>
+<pre><code class="language-bash">ps -e|mxsh "&gt;" /tmp/foo.txt</code></pre>
+<p>
+	The redirection symbol was written in
+	double quotes in order to avoid redirection
+	in the shell executing that command.
+</p>
+<p>
+	Exposing operating system processes is very
+	dangerous ofcourse, and special attention
+	should be payed to security, for example
+	to add simple authentication, tokens,
+	etc. This will, however, result in a little
+	more work on the side of the request handler
+	as well as the client program, but is well
+	worth it.
+</p>
+<script>
+	Prism.highlightAll()
+</script>

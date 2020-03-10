@@ -1,0 +1,13 @@
+Usage: sim65 [options] file [arguments]
+Short options:
+  -h			Help (this text)
+  -c			Print amount of executed CPU cycles
+  -v			Increase verbosity
+  -V			Print the simulator version number
+  -x <num>		Exit simulator after <num> cycles
+
+Long options:
+  --help		Help (this text)
+  --cycles		Print amount of executed CPU cycles
+  --verbose		Increase verbosity
+  --version		Print the simulator version number

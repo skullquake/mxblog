@@ -1,0 +1,39 @@
+<p>STL <code>std::function</code> class template provides a general-purpose polymorphic function wrapper than can <i>store</i>, <i>copy</i>, and <i>invoke</i> any <code>Callable</code> target. These include <code>function</code>s, <code>lambda</code>s, <code>bind expression</code>s
+or other function objects like including <code>pointer</code>s to <code>member function</code>s
+and <code>pointer</code>s to <code>data member</code>s</p>
+<p>In the context of <code>std::function</code>, Stored callable objects are called targets. When the <code>std::function</code> contains no target, it is called <i>empty</i>. Invoking <i>empty</i>
+<code>std::function</code>s yields a <code>std::exception::bad_function_call</code> exception.</p>
+<p>Here is a very rudimentary example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;functional&gt;
+void f0(){
+}
+int main(int argc,char** argv){
+  std::function&lt;void(void)&gt; f0=f0;
+  std::function&lt;void(int)&gt; f1=[](int a){
+    std::cout&lt;&lt;a&lt;&lt;std::endl;
+  };
+  f0();
+  f1(0);
+  return 0;
+}</code></pre>
+<p>You can create <code>std::function</code>s off a class member as follows</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;functional&gt;
+class C0{
+	public:
+		f0(){};
+};
+void f0(){
+}
+int main(int argc,char** argv){
+  std::function&lt;void(void)&gt; f0=&amp;C0::f0;
+  C0 c0;
+  f0(c0);
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+
+

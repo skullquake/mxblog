@@ -1,0 +1,25 @@
+<p>
+	In this post we explore exposing shared buffers via request handlers.
+	The basic idea is to have a request handler that reads an
+	input stream and buffers it continuously. This buffer is then shared
+	and made available to another request handler or request handlers
+	for reading. The end result is buffer shared between request handlers.
+	A possible use for this might be continual data streaming, such
+	as audio or video, but the data itself is arbitrary, with possible
+	specific implementation modification for textual delimited data
+	and binary data. With the implementation in place, it can be modified
+	for whatever specific end implementation is required.
+</p>
+<p>
+	The first thing to do is to set up a passthrough request handler
+	and test client. Setting up the test client is more difficult than
+	the th test request handler, and involves creating a <i>named pipe</i>
+	on some client using something like <code>mknod</code>, keeping
+	it open with a dummy redirection, e.g. <code>sleep 60000 &gt; ./mypipe</code>,
+	connect <code>curl</code> to it in chunked mode directed at your request
+	handler, and then using another process to redirect data to the pipe.
+</p>
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>

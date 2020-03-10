@@ -1,0 +1,5 @@
+pacman -Syu
+pacman -S base-devel gcc vim cmake
+pacman -S development
+pacman -S git
+pacman -Ss cmake

@@ -1,0 +1,60 @@
+<p>The <code>pybind11</code> library is usually used to create <code>c++</codE> classes and compile them into shared objects importable by the <code>Python</code> interpreter, either the embedded python interpreter or the regular python interpreter. You can, when using the embedded interpreter, import such seperately compiled modules and use them, but it is also possible to define both functions and classes in your c++ code and use them there and then in the embedded interpreter by using the <code>PYBIND11_EMBDDED_MODULE</code> macro.</p>
+<p>When embdding functions, you can embed regular functions or <i>lambda</i> functions, which is pretty handy.</p>
+<pre><code class="language-javascript">PYBIND11_EMBEDDED_MODULE(fast_calc, m) {
+	m.def("add", [](int i, int j) {
+		return i + j;
+	});
+}</code></pre>
+<p>Embedding classes is much the same, as illustrated in the following example</p>
+<pre><code class="language-javascript">class Obj{
+	public:
+		Obj(std::string aP="")
+			:m_a(aP)
+		{
+		}
+		~Obj(){
+		}
+		void setA(std::string aP){
+			this-&gt;m_a=aP;
+		}
+		std::string getA(){
+			return this-&gt;m_a;
+		}
+	private:
+		std::string m_a;
+};
+PYBIND11_EMBEDDED_MODULE(imod,m){
+	pybind11::class_&lt;Obj&gt;(m,"Obj")
+		.def(pybind11::init&lt;const std::string &amp;&gt;())
+		.def("setA",&amp;Obj::setA)
+		.def("getA",&amp;Obj::getA)
+	;
+}</code></pre>
+<p>Sample usage for a class</p>
+<pre><code class="language-javascript">//setup ctx
+pybind11::scoped_interpreter guard{};
+pybind11::module m=pybind11::module::import("__main__");
+pybind11::object s=m.attr("__dict__");
+auto _Obj=py::module::import("imod");
+//script
+pybind11::exec(
+	R"(
+import imod
+o=imod.Obj("a")
+print(o)
+print(o.getA())
+o.setA('b')
+print(o.getA())
+	)",
+	s
+);
+//api
+pybind11::object o=pybind11::module("imod").attr("Obj")("a");
+std::cout&lt;&lt;o.attr("getA")().cast&lt;std::string&gt;()&lt;&lt;std::endl;
+o.attr("setA")("b");
+std::cout&lt;&lt;o.attr("getA")().cast&lt;std::string&gt;()&lt;&lt;std::endl;</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+
+

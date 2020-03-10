@@ -1,0 +1,5 @@
+accept: application/json
+title: Python - mxsh
+status: publish
+type: Post
+image: python.png

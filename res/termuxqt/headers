@@ -1,0 +1,5 @@
+accept: application/json
+title: Termux:Qt
+status: publish
+type: Post
+image: unix.png

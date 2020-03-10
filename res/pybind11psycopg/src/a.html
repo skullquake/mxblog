@@ -1,0 +1,95 @@
+<p>Let's look at using <code>psycopg</code> with <code>pybind11</code></p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;pybind11/embed.h&gt;
+namespace py=pybind11;
+using namespace py::literals;
+int main(int argc,char** argv){
+	pybind11::scoped_interpreter guard{};
+	pybind11::module m=pybind11::module::import("__main__");
+	pybind11::object s=m.attr("__dict__");
+	//script
+	pybind11::exec(
+		R"(
+import psycopg2
+try:
+	connection=psycopg2.connect("dbname='test' host='localhost' port=5432");
+	print("scon");
+	cursor=connection.cursor();
+	print(connection.get_dsn_parameters(),"\n");
+	cursor.execute("SELECT version();");
+	record=cursor.fetchone();
+	print("You are connected to - ", record,"\n");
+except Exception,e:
+	print(e);
+finally:
+#closing database connection.
+	if(connection):
+		cursor.close();
+		connection.close();
+		print("econ");
+		)",
+		s
+	);
+	//api
+	std::cout&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+	try{
+		pybind11::object connection=pybind11::module("psycopg2").attr("connect")("dbname='test' host='localhost' port=5432");
+		std::cout&lt;&lt;"scon";
+		pybind11::object cursor=connection.attr("cursor")();
+		cursor.attr("execute")("SELECT version();");
+		pybind11::object record=cursor.attr("fetchone")();
+		pybind11::print(record);
+		cursor.attr("execute")(
+			R"(
+create table if not exists person(
+	name varchar(255),
+	ssoc varchar(255)
+)
+			)"
+		);
+		connection.attr("commit")();
+		cursor.attr("execute")(
+			pybind11::str(
+				R"(
+insert into person
+	(
+		name,
+		ssoc
+	)
+	values
+	(
+		%s,
+		%s
+	)
+				)"
+			),
+			pybind11::make_tuple("foo","bar")
+		);
+		connection.attr("commit")();
+		pybind11::print(pybind11::str("Record inserted successfully into mobile table"));
+		cursor.attr("execute")(
+			pybind11::str(
+				R"(
+select * from person
+				)"
+			),
+			pybind11::make_tuple("foo","bar")
+		);
+		pybind11::iterable rows=cursor.attr("fetchall")();
+		for(auto row:rows){
+			std::cout&lt;&lt;row.cast&lt;pybind11::list&gt;()[0].cast&lt;std::string&gt;()&lt;&lt;",";
+			std::cout&lt;&lt;row.cast&lt;pybind11::list&gt;()[1].cast&lt;std::string&gt;()&lt;&lt;std::endl;
+		}
+		if(!connection.is_none()){
+			cursor.attr("close")();
+			connection.attr("close")();
+			pybind11::print("econ");
+		}
+	}catch(std::exception e){
+		std::cerr&lt;&lt;e.what()&lt;&lt;std::endl;
+	}
+	return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

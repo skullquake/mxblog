@@ -1,0 +1,175 @@
+<p>Neither <code>c</code> nor <code>c++</code> has a switch function that can
+handle <i>c strings</i> or <code>std::string</code>. You'll often find the following</p>
+<pre><code class="language-javascript">std::string in;
+std::cin&gt;&gt;in;
+if(in.compare("foo")==0){
+	//...
+} else if(in.compare("bar")==0){
+	//...
+} else if(in.compare("baz")==0){
+	//...
+}</code></pre>
+<p>This is very inconvenient. Here are a couple of workarounds</p>
+<h3>Map of <code>Lambdas</code></h3>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;map&gt;
+#include&lt;functional&gt;
+int main(int argc,char** argv){
+		//simple menu
+		bool done=false;
+		std::map&lt;std::string,std::function&lt;void(void)&gt;&gt; a;
+		a.insert(
+			std::pair&lt;
+				std::string,
+				std::function&lt;void(void)&gt;
+			&gt;(
+				"1",
+				[=](){
+					std::cout&lt;&lt;"Option 1 chosen"&lt;&lt;std::endl;
+				}
+			)
+		);
+		a.insert(
+			std::pair&lt;
+				std::string,
+				std::function&lt;void(void)&gt;
+			&gt;(
+				"2",
+				[=](){
+					std::cout&lt;&lt;"Option 2 chosen"&lt;&lt;std::endl;
+				}
+			)
+		);
+		a.insert(
+			std::pair&lt;
+				std::string,
+				std::function&lt;void(void)&gt;
+			&gt;(
+				"q",
+				[&amp;](){
+					std::cout&lt;&lt;"Quitting"&lt;&lt;std::endl;
+					done=true;
+				}
+			)
+		);
+		while(!done){
+			int idx=0;
+			for(auto b:a){
+				std::cout
+					&lt;&lt;idx++
+					&lt;&lt;". "
+					&lt;&lt;b.first
+					&lt;&lt;std::endl
+				;
+			}
+			std::string selection;
+			std::cin&gt;&gt;selection;
+			if(a.find(selection)!=a.end()){
+				a[selection]();
+			}else{
+				std::cerr&lt;&lt;"Invalid options"&lt;&lt;std::endl;
+			}
+
+		}
+	return 0;
+}</code></pre>
+<h3>Map of enum</h3>
+<p>The following uses a map of enum</p>
+
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;map&gt;
+static enum Opt{
+	foo,
+	bar,
+	baz,
+	qux
+};
+int main(int argc,char** argv){
+	static std::map&lt;std::string,Opt&gt; opts={
+		std::pair&lt;std::string,Opt&gt;("foo",foo),
+		std::pair&lt;std::string,Opt&gt;("bar",bar),
+		std::pair&lt;std::string,Opt&gt;("baz",baz),
+		std::pair&lt;std::string,Opt&gt;("qux",qux)
+	};
+	std::string in;
+	std::cin&gt;&gt;in;
+	if(opts.find(in)!=opts.end()){
+		switch(opts[in]){
+
+			case foo:
+				std::cout&lt;&lt;"option foo"&lt;&lt;std::endl;
+				break;
+			case bar:
+				std::cout&lt;&lt;"option bar"&lt;&lt;std::endl;
+				break;
+			case baz:
+				std::cout&lt;&lt;"option baz"&lt;&lt;std::endl;
+				break;
+			case qux:
+				std::cout&lt;&lt;"option qux"&lt;&lt;std::endl;
+				break;
+			default:
+				std::cout&lt;&lt;"invalid option"&lt;&lt;std::endl;
+				break;
+		}
+	}else{
+		std::cout&lt;&lt;"invalid option"&lt;&lt;std::endl;
+	}
+
+	return 0;
+}</code></pre>
+<p>You can use conversion maps as follows</p>
+<pre><code class="language-javascript">static enum Opt{
+	foo,
+	bar,
+	baz,
+	qux
+};
+std::map&lt;std::string,Opt&gt; StrOpt={
+	{"foo",Opt::foo},
+	{"bar",Opt::bar},
+	{"baz",Opt::baz},
+	{"qux",Opt::qux}
+};
+std::map&lt;Opt,std::string&gt; OptStr={
+	{Opt::foo,"foo"},
+	{Opt::bar,"bar"},
+	{Opt::baz,"baz"},
+	{Opt::qux,"qux"}
+};
+...
+	static std::map&lt;std::string,Opt&gt; opts={
+		std::pair&lt;std::string,Opt&gt;("foo",foo),
+		std::pair&lt;std::string,Opt&gt;("bar",bar),
+		std::pair&lt;std::string,Opt&gt;("baz",baz),
+		std::pair&lt;std::string,Opt&gt;("qux",qux)
+	};
+	std::string in;
+	std::cin&gt;&gt;in;
+	Opt opt=StrOpt[in];
+	if(opts.find(in)!=opts.end()){
+		switch(opt){
+			case Opt::foo:
+				std::cout&lt;&lt;"option foo"&lt;&lt;std::endl;
+				break;
+			case Opt::bar:
+				std::cout&lt;&lt;"option bar"&lt;&lt;std::endl;
+				break;
+			case Opt::baz:
+				std::cout&lt;&lt;"option baz"&lt;&lt;std::endl;
+				break;
+			case Opt::qux:
+				std::cout&lt;&lt;"option qux"&lt;&lt;std::endl;
+				break;
+			default:
+				std::cout&lt;&lt;"invalid option"&lt;&lt;std::endl;
+				break;
+		}
+	}else{
+		std::cout&lt;&lt;"invalid option"&lt;&lt;std::endl;
+	}</code></pre>
+<h3>oklas/switch</h3>
+<p>Another option is to use <a href="https://github.com/iklas/switch">oklas/switch</a>, an <i>any type data switch</i> for <code>C</code>/<code>C++</code>/<code>C++11</code></p>
+<script>
+	Prism.highlightAll()
+</script>

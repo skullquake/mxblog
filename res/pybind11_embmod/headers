@@ -1,0 +1,5 @@
+accept: application/json
+title: pybind11: embedded interpreter functions/classes
+status: publish
+type: Post
+image: python.png

@@ -1,0 +1,21 @@
+Usage: sp65 [options] file [options] [file]
+Short options:
+  -V				Print the version number and exit
+  -c fmt[,attrlist]		Convert into target format
+  -h				Help (this text)
+  -lc				List all possible conversions
+  -r file[,attrlist]		Read an input file
+  -v				Increase verbosity
+  -w file[,attrlist]		Write the output to a file
+
+Long options:
+  --convert-to fmt[,attrlist]	Convert into target format
+  --dump-palette		Dump palette as table
+  --help			Help (this text)
+  --list-conversions		List all possible conversions
+  --pop				Restore the original loaded image
+  --read file[,attrlist]	Read an input file
+  --slice x,y,w,h		Generate a slice from the loaded bitmap
+  --verbose			Increase verbosity
+  --version			Print the version number and exit
+  --write file[,attrlist]	Write the output to a file

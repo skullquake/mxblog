@@ -1,0 +1,30 @@
+Update msys2
+
+pacman -Syu
+
+Then close the terminal and run mingw64.exe
+
+pacman \
+	-S\
+	development\
+	base-devel\
+	gcc\
+	vim\
+	cmake\
+	mingw-w64-x86_64-nodejs\
+	git\
+	mingw-w64-x86_64-editrights\
+	cygrunsrv\
+	openssh
+
+Set up ssh
+
+ssh-keygen -f /etc/ssh/ssh_host_rsa_key -N '' -t rsa
+ssh-keygen -f /etc/ssh/ssh_host_dsa_key -N '' -t dsa
+ssh-keygen -f /etc/ssh/ssh_host_ecdsa_key -N '' -t ecdsa
+ssh-keygen -f /etc/ssh/ssh_host_ed25519_key -N '' -t ed25519
+
+To start ssh server
+
+/usr/bin/sshd
+

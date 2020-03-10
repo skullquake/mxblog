@@ -1,0 +1,177 @@
+<p>libPOCO (PortableComponents) is a is a collection of open source C++ class libraries simplifying development of networking, portable C++ applications. I've managed to sucesfully compile this on Debian, Raspbian, Termux, and Windows under MSYS2. Some minor modifications where necessary for Termux, including <code>shm_*</code> replacements.</p>
+<pre><code class="language-bash">wget https://pocoproject.org/releases/poco-1.9.4/poco-1.9.4.tar.gz
+tar xf ./poco-1.9.4.tar.gz
+cd ./1.9.4
+mkdir _build
+cmake -DCMAKE_INSTALL_PREFIX=/usr ../
+make -j8</code></pre>
+<p>A simple webserver looks something like this</p>
+<pre><code class="language-c++">#include "Poco/Net/HTTPServer.h"
+#include "Poco/Net/HTTPRequestHandler.h"
+#include "Poco/Net/HTTPRequestHandlerFactory.h"
+#include "Poco/Net/HTTPServerParams.h"
+#include "Poco/Net/HTTPServerRequest.h"
+#include "Poco/Net/HTTPServerResponse.h"
+#include "Poco/Net/HTTPServerParams.h"
+#include "Poco/Net/ServerSocket.h"
+#include "Poco/Timestamp.h"
+#include "Poco/DateTimeFormatter.h"
+#include "Poco/DateTimeFormat.h"
+#include "Poco/Exception.h"
+#include "Poco/ThreadPool.h"
+#include "Poco/Util/ServerApplication.h"
+#include "Poco/Util/Option.h"
+#include "Poco/Util/OptionSet.h"
+#include "Poco/Util/HelpFormatter.h"
+#include &lt;iostream&gt;
+
+using Poco::Net::ServerSocket;
+using Poco::Net::HTTPRequestHandler;
+using Poco::Net::HTTPRequestHandlerFactory;
+using Poco::Net::HTTPServer;
+using Poco::Net::HTTPServerRequest;
+using Poco::Net::HTTPServerResponse;
+using Poco::Net::HTTPServerParams;
+using Poco::Timestamp;
+using Poco::DateTimeFormatter;
+using Poco::DateTimeFormat;
+using Poco::ThreadPool;
+using Poco::Util::ServerApplication;
+using Poco::Util::Application;
+using Poco::Util::Option;
+using Poco::Util::OptionSet;
+using Poco::Util::OptionCallback;
+using Poco::Util::HelpFormatter;
+
+class TimeRequestHandler:public HTTPRequestHandler{
+	public:
+		TimeRequestHandler(const std::string&amp; format)
+			:_format(format)
+		{
+		}
+		void handleRequest(HTTPServerRequest&amp; request,HTTPServerResponse&amp; response){
+			Application&amp; app=Application::instance();
+			app.logger().information("Request from "+request.clientAddress().toString());
+			Timestamp now;
+			std::string dt(DateTimeFormatter::format(now,_format));
+			response.setChunkedTransferEncoding(true);
+			response.setContentType("text/html");
+			std::ostream&amp; ostr=response.send();
+			ostr&lt;&lt;"&lt;html&gt;&lt;head&gt;&lt;title&gt;HTTPTimeServer powered by POCO C++ Libraries&lt;/title&gt;";
+			ostr&lt;&lt;"&lt;meta http-equiv=\"refresh\" content=\"1\"&gt;&lt;/head&gt;";
+			ostr&lt;&lt;"&lt;body&gt;&lt;p style=\"text-align:center;font-size: 48px;\"&gt;";
+			ostr&lt;&lt;dt;
+			ostr&lt;&lt;"&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;";
+		}
+	private:
+		std::string _format;
+};
+class OtherRequestHandler:public HTTPRequestHandler{
+	public:
+		OtherRequestHandler(const std::string&amp; format)
+		{
+		}
+		void handleRequest(HTTPServerRequest&amp; request,HTTPServerResponse&amp; response){
+			Application&amp; app=Application::instance();
+			app.logger().information("Request from "+request.clientAddress().toString());
+			std::ostream&amp; ostr=response.send();
+			response.setChunkedTransferEncoding(false);
+			response.setContentType("text/html");
+			ostr&lt;&lt;"&lt;html&gt;&lt;head&gt;&lt;title&gt;Other Request Handler&lt;/title&gt;";
+			ostr&lt;&lt;"&lt;meta&gt;&lt;/head&gt;";
+			ostr&lt;&lt;"&lt;body&gt;&lt;p style=\"text-align:center;font-size: 48px;\"&gt;";
+			ostr&lt;&lt;"&lt;h3&gt;test&lt;/h3&gt;";
+			ostr&lt;&lt;"&lt;/body&gt;&lt;/html&gt;";
+		}
+	private:
+};
+class TimeRequestHandlerFactory: public HTTPRequestHandlerFactory{
+	public:
+		TimeRequestHandlerFactory(const std::string&amp; format)
+			:_format(format)
+		{
+		}
+
+		HTTPRequestHandler* createRequestHandler(const HTTPServerRequest&amp; request)
+		{
+			if(request.getURI()=="/")
+				return new TimeRequestHandler(_format);
+			else if(request.getURI()=="/other")
+				return new OtherRequestHandler(_format);
+			return 0;
+		}
+	private:
+		std::string _format;
+};
+
+class HTTPTimeServer: public Poco::Util::ServerApplication{
+	public:
+		HTTPTimeServer()
+			:_helpRequested(false)
+		{
+		}
+
+		~HTTPTimeServer()
+		{
+		}
+
+	protected:
+		void initialize(Application&amp; self)
+		{
+			loadConfiguration();
+			ServerApplication::initialize(self);
+		}
+
+		void uninitialize()
+		{
+			ServerApplication::uninitialize();
+		}
+
+		void defineOptions(OptionSet&amp; options)
+		{
+			ServerApplication::defineOptions(options);
+
+			options.addOption(
+				Option("help","h","display argument help information")
+				.required(false)
+				.repeatable(false)
+				.callback(OptionCallback&lt;HTTPTimeServer&gt;(this,&amp;HTTPTimeServer::handleHelp))
+			);
+		}
+
+		void handleHelp(const std::string&amp; name,const std::string&amp; value)
+		{
+			HelpFormatter helpFormatter(options());
+			helpFormatter.setCommand(commandName());
+			helpFormatter.setUsage("OPTIONS");
+			helpFormatter.setHeader("A web server that serves the current date and time.");
+			helpFormatter.format(std::cout);
+			stopOptionsProcessing();
+			_helpRequested=true;
+		}
+
+		int main(const std::vector&lt;std::string&gt;&amp; args)
+		{
+			if (!_helpRequested)
+			{
+				unsigned short port=(unsigned short)config().getInt("HTTPTimeServer.port",8080);
+				std::string format(config().getString("HTTPTimeServer.format", DateTimeFormat::SORTABLE_FORMAT));
+				ServerSocket svs(port);
+				HTTPServer srv(new TimeRequestHandlerFactory(format),svs,new HTTPServerParams);
+				srv.start();
+				waitForTerminationRequest();
+				srv.stop();
+			}
+			return Application::EXIT_OK;
+		}
+	private:
+		bool _helpRequested;
+};
+int main(int argc,char** argv){
+	HTTPTimeServer app;
+	return app.run(argc,argv);
+}</code></pre>
+<p>Relevant libraries to linke agains are <code>-lPocoFoundation</code> and <code>-lPocoNet</code>, with <code>-llog</code> also required for Termux. The source tree contains numerous examples. This is a really useful library, and being C++ you can rock up with +-5000 requests per second (depending on the machine)</p>
+<script>
+	Prism.highlightAll()
+</script>

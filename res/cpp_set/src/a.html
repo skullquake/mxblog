@@ -1,0 +1,66 @@
+<p>Let's take a look at <code>std::set</code>, an associative container where each element has to be unique. To use it, include <code>set</code>.</p>
+<h3>Basics</h3>
+<p>Important functions associated with it include the following:</p>
+<ul>
+	<li>
+		<code>begin()</code>: First element iterator
+	</li>
+	<li>
+		<code>end()</code>: Last element iterator
+	</li>
+	<li>
+		<code>size()</code>: Total number of elements 
+	</li>
+	<li>
+		<code>max_size()</code>: Maximum number of elements container can hold
+	</li>
+	<li>
+		<code>empty()</code>: Returns whether the set is empty.
+	</li>
+</ul>
+<p>Here's a basic example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;set&gt;
+#include&lt;iterator&gt;
+int main(int argc,char** argv){
+	std::set &lt;std::string&gt; s;
+	// insert elements in random order
+	s.insert("a");
+	s.insert("b");
+	s.insert("a");
+	s.insert("b");
+	for(auto i=s.begin();i!=s.end();++i){
+		std::cout&lt;&lt;*i&lt;&lt;std::endl;;
+	}
+	return 0;
+}</code></pre>
+<p>Sample output</p>
+<pre><code class="language-javascript">a
+b</code></pre>
+<p>Note that adding a specific element multiple times into the set does not add it to the container again as illustrated in the output of the iteration.</p>
+<p>A single element can be removed as follows</p>
+<pre><code class="language-javascript">s.erase("a");</code></pre>
+<p>All elements can be removed as follows</p>
+<pre><code class="language-javascript">s.earse(s.begin(),s.end());</code></pre>
+<p>You can check if an element exists by using the <code>count()</code> function, and in the case
+of a set this wil always either be <code>0</code> or <code>1</code></p>
+<pre><code class="language-javascript">s.count("a");</code></pre>
+<h3>Sample Usage</h3>
+<p>In the below we use <code>std::set</code> to add, remove, and check if contains <code>std::string</code> in order to aid in managing prepared statements in <code>libpqxx</code></p>
+<pre><code class="language-javascript">std::set&lt;std::string&gt; sps;
+result qfoo_exec(int bar,int baz){
+  if(sps.count("ps_qfoo")){
+    this-&gt;C-&gt;prepare("ps_qfoo","select * from foo where bar=$1 and baz=$2");
+    sps.insert("ps_qfoo");
+  }
+  return R(N.exec_prepared("qfoo",bar,baz);
+}
+void qfoo_rmps(){
+  if(sps.count("ps_qfoo")==0){
+    this-&gt;C-&gt;unprepare("ps_qfoo");
+    sps.erase("ps_qfoo");
+}</code></pre>
+<p>A set <code>sps</code> contains names of prepared statements. On executing <code>qfoo_exec</code> a check is done to see wether to see if the prepared statement has been prepared based on the contents of <code>sps</code>. Function <code>qfoo_rmps</code> removes the prepared statement if it is indicated that it has already been prepared by checking <code>sps</code> via the <code>count</code> function, and calls <code>unprepare</code> and <code>erase</code> if it is necessary.</p>
+<script>
+	Prism.highlightAll()
+</script>

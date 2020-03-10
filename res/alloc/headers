@@ -1,0 +1,5 @@
+accept: application/json
+title: GCC alloc
+status: draft
+type: Post
+image: c.png

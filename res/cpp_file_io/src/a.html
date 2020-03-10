@@ -1,0 +1,702 @@
+<p>Let's take a look at file io in <code>C++</code>. The following classes
+are provided for working with files</p>
+<ul>
+	<li><code>std::ofstream</code>: for writing to files</li>
+	<li><code>std::ifstream</code>: for reading from files</li>
+	<li><code>std::fstream</code>: for reading from and writing to files</li>
+</ul>
+<p>The above classes are derived from <code>std::istream</code> and <code>std::ostream</code>. <code>std::cin</code> and <code>std::cout</code> are also derived from <code>std::istream</code> and <code>std::ostream</code>, meaning
+that you can use <code>std::ofstream</code>, <code>std:;ifstream</code> and <code>std::fstream</code> in much
+the same way as you do <code>std::cin</code> and <code>std::cout</code>. Here is a basic example of writing
+a <code>std::string</code> to a file</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;fstream&gt;
+int main(int argc,char ** argv){
+  std::ofstream outf;
+  outf.open ("ex.txt");
+  outf&lt;&lt;"Lorem ipsum"&lt;&lt;std::endl;
+  outf.close();
+  return 0;
+}</code></pre>
+<h3>Files and Streams</h3>
+<p>An open file is represented by a <i>stream</i>. In the above example the output file was represented by an
+<i>output stream</i> of type <code>std::ofstream</code>. Operations performed on the <i>output stream</i> will
+be applied to the physical file. When opening a file for reading, writing, or reading and writing, you can
+specify the mode to open it in.</p>
+<ul>
+	<li><code>std::ios::in</code>: open file for input</li>
+	<li><code>std::ios::out</code>: open file for output</li>
+	<li><code>std::ios::binary</code>: open file in binary mode</li>
+	<li><code>std::ios::ate</code>: set cursor to end of file</li>
+	<li><code>std::ios::app</code>: append to file</li>
+	<li><code>std::ios::trunc</code>: clear file upon write</li>
+</ul>
+<p>Mode operation flags can be combined using the bitwise OR, for example <code>std::ios::out|std::ios::app</code></p>
+<p>The stream classes have some default mode flags set as follows</p>
+<ul>
+	<li><code>std::ofstream</code>: <code>std::ios::out</code></li>
+	<li><code>std::ifstream</code>: <code>std::ios::in</code></li>
+	<li><code>std::fstream</code>: <code>std::ios::in|std::ios::out</code></li>
+</ul>
+<p>For <code>std::fstream</code> the default mode argument are applied only if no mode argument was given.</p>
+<p>To check if a file was sucesfully opened, you can use the <code>is_open()</code> member function as follows</p>
+<pre><code class="language-javascript">std::ofstream outf;
+outf.open ("ex.txt");
+if(outf.is_open()){
+	//opened
+}else{
+	//not opened
+}</code></pre>
+<p>To close a file use the <code>close()</code> member function</p>
+<pre><code class="language-javascript">std::ofstream outf;
+outf.open ("ex.txt");
+if(outf.is_open()){
+	outf.close();
+}else{
+}</code></pre>
+<p>Coincidentally, <code>std::istream</code> and <code>std::ostream</code> objects will call <code>close()</code> on destruction.</p>
+<h3>Reading Files</h3>
+<p>Let's look at reading files.</p>
+<pre><code class="language-javascript">#include &lt;iostream&gt;
+#include &lt;fstream&gt;
+#include &lt;string&gt;
+int main(int argc,char** argv){
+  std::string ln;
+  std::ifstream inf("ex.txt");
+  if(inf.is_open()){
+    while(std::getline(inf,ln)){
+      std::cout &lt;&lt;ln&lt;&lt;std::endl;
+    }
+    inf.close();
+  }else{
+    std::cout&lt;&lt;"Error: Could not open file"; 
+  }
+  return 0;
+}</code></pre>
+<h3>Checking Stream State</h3>
+<p>Stream classes have the following member functions to inspect their state, which is useful for determining
+if an operation failed performing it.</p>
+<ul>
+	<li><code>bad()</code>: operation failed</li>
+	<li><code>fail()</code>: operation failed or formatting error occured</li>
+	<li><code>eof()</code>: end of file reached</li>
+	<li><code>good()</code>: </li>
+</ul>
+<p>The <i>formatting errors</i> for <code>fail()</code> might include trying to read an <code>string</code> into an <code>int</code>.
+<code>clear()</code> can be used to reset the state flags of the stream.</p>
+<h3>Stream Positioning</h3>
+<p>Streams keep track of their position and the following member functions relate to stream positioning</p>
+<ul>
+	<li><code>tellg()</code>: internal <i>get</i> position</li>
+	<li><code>tellp()</code>: internal <i>put</i> position</li>
+	<li><code>seekg()</code>: change internal <i>get</i> position</li>
+	<li><code>seekp()</code>: change internal <i>put</i> position</li>
+</ul>
+<p>There are also flags that relate to positioning</p>
+<ul>
+	<li><code>std::ios::end</code>: end of file</li>
+	<li><code>std::ios::begin</code>: start of file</li>
+</ul>
+<p><code>seekg()</code> and <code>seekp()</code> can be used to <i>seek</i> the <i>get</i> and <i>put</i> position.
+If used with one argument, the position as adjusted <i>absolutely</i>, <i>i.e.</i> relative from the beginning of the stream.
+If used with two arguments, the second argument specifies relative to what position the seeking should occur. The
+following example illustrates the above</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;fstream&gt;
+int main(int argc,char** argv){
+  std::streampos begin,end;
+  std::ifstream inf("ex.bin",ios::binary);
+  begin=inf.tellg();
+  inf.seekg(0,std::ios::end);
+  end=inf.tellg();
+  inf.close();
+  std::cout&lt;&lt;"size is: "&lt;&lt;(end-begin)&lt;&lt;" bytes."&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p>Stream positions also have their own type you can work with, namely <code>std::streampos</code>, and
+<code>tellg()</code> and <code>tellp()</code> both return this type.</p>
+<h3>Binary Files</h3>
+<p>For reading and writing text files we use the stream insertion and extraction operators. This is inefficient
+when reading and writing binary files as we dot need to perform formatting as provided by these operators.
+The following example illustrates reading a binary file.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;fstream&gt;
+int main(int argc,char** argv){
+  std::streampos sz;
+  uint8_t *buf;
+  std::ifstream inf(
+    "ex.bin",
+    std::ios::in|std::ios::binary|std::ios::ate
+  );
+  if(file.is_open()){
+    sz=inf.tellg();
+    buf=new uint8_t[sz];
+    inf.seekg(0,std::ios::beg);
+    inf.read(buf,sz);
+    inf.close();
+    std::cout&lt;&lt;"buffer filled"&lt;&lt;std::endl;
+    delete[] buf;
+  }else{
+    std::cerr&lt;&lt;"error: could not open file"&lt;&lt;std::endl;
+  }
+  return 0;
+}</code></pre>
+<p>To write binary to a stream we use the <code>write()</code> member function which takes a pointer to some
+buffer and the amount of bytes we want to write. Let's take a look at writing an array of <code>uint8_t</code> to a binary file</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;fstream&gt;
+int main(int argc,char** argv){
+  std::ofstream outf("./uint8_t.bin",std::ios::binary);
+  if(outf.is_open()){
+    uint8_t buf[32];
+    for(int i=0;i&lt;sizeof(buf)/sizeof(buf[0]);i++){
+      buf[i]=(uint8_t)i;
+    }
+    outf.write((char*)buf,sizeof(buf)/sizeof(buf[0]));
+    outf.close();
+  }else{
+    std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+  }
+  return 0;
+}</code></pre>
+<p><code>std::ofstream::write</code> expects the first parameter to be a pointer of type <code>char*</code>,
+and in the above we cast the pointer to our array of <code>uint8_t</code> to <code>char*</code>. The amount
+of bytes to write is dependent on the size of the buffer multiplied by the size of the elements contained
+in the buffer. Let's take a look at writing <code>std::string</code> to a binary stream</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;fstream&gt;
+int main(int argc,char** argv){
+  auto str="Lorem ipsum";
+  std::ofstream outf("txt.bin",std::ofstream::binary);
+  outf.write(txt.c_str(),txt.size());
+  return 0;
+}</code></pre>
+<p>In the above we access the contiguous memory block containing the bytes of the string using the
+<code>c_str()</code> member function of <code>std::string</code>.</p>
+<p>Any contiguous block of data can be written to an outputstream using the <code>write()</code> method, including
+structs, as illustrated in the following example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;fstream&gt;
+struct Foo{
+  int bar;
+  float baz;
+  char qux[16];
+};
+int main(int argc,char** argv){
+  std::ofstream outf("./foo.bin",std::ios::binary);
+  if(outf.is_open()){
+    struct Foo buf[]={
+      {0,1.1,"Foo"},
+      {1,2.2,"Bar"},
+      {1,3.3,"Baz"},
+      {2,4.4,"Qux"},
+      {3,5.5,"Klutz"}
+    };
+    outf.write((char*)buf,sizeof(Foo)*sizeof(buf)/sizeof(buf[0]));
+    outf.close();
+  }else{
+    std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+  }
+  return 0;
+}</code></pre>
+<p>Running <code>xxd</code> on the above produces the following</p>
+<pre><code class="language-javascript">00000000: 0000 0000 cdcc 8c3f 466f 6f00 0000 0000  .......?Foo.....
+00000010: 0000 0000 0000 0000 0100 0000 cdcc 0c40  ...............@
+00000020: 4261 7200 0000 0000 0000 0000 0000 0000  Bar.............
+00000030: 0100 0000 3333 5340 4261 7a00 0000 0000  ....33S@Baz.....
+00000040: 0000 0000 0000 0000 0200 0000 cdcc 8c40  ...............@
+00000050: 5175 7800 0000 0000 0000 0000 0000 0000  Qux.............
+00000060: 0300 0000 0000 b040 4b6c 7574 7a00 0000  .......@Klutz...
+00000070: 0000 0000 0000 0000                      ........</code></pre>
+<h3>Decoding Binary</h3>
+<p>The above examples illustrated using <code>write()</code> to write binary files. Let's take a look
+at doing the reverse</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;fstream&gt;
+int main(int argc,char** argv){
+  //write
+  {
+    std::ofstream outf("./char.bin",std::ios::binary);
+    if(outf.is_open()){
+      char buf[32];
+      for(int i=0;i&lt;sizeof(buf)/sizeof(buf[0]);i++){
+        buf[i]='a'+i;
+      }
+      outf.write(buf,sizeof(buf)/sizeof(buf[0]));
+      outf.close();
+    }else{
+      std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+    }
+  }
+  //read
+  {
+    std::ifstream inf("./char.bin",std::ios::binary);
+    if(inf.is_open()){
+      char buf[32];
+      inf.read(buf,sizeof(buf)/sizeof(buf[0]));
+      inf.close();
+      for(auto c:buf){
+        std::cout&lt;&lt;c&lt;&lt;" ";
+      }
+      std::cout&lt;&lt;std::endl;
+    }else{
+      std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+    }
+  }
+  return 0;
+}</code></pre>
+<p>Here we write a <code>char</code> buffer to a file and then open the file in binary mode
+and populate a buffer with a single <code>read()</code> call. The assumption is that the file
+will contain exactly <code>32</code> char elements. Let's look at finding out how many elements
+are in a binary file in order to dynamically populate an array of <code>char</code></p>
+<pre><code class="language-javascript">std::ifstream inf("./char.bin",std::ios::binary);
+if(inf.is_open()){
+  inf.seekg(0,std::ios::end);
+  int fsz=inf.tellg();
+  inf.seekg(0,std::ios::beg);
+  int nel=fsz/sizeof(char);
+  char *buf=new char[nel];
+  inf.read(buf,fsz);
+  inf.close();
+  for(int i=0;i&lt;nel;i++){
+    std::cout&lt;&lt;buf[i]&lt;&lt;" ";
+  }
+  delete [] buf;
+  std::cout&lt;&lt;std::endl;
+}else{
+  std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+}</code></pre>
+<p>In the above we use <code>seekg(0,std::ios::end)</code> to seek to the end of the file in order to use
+<code>tellg()</code> to determine the length of the file. We seek back to the beginning using 
+<code>seekg(0,std::ios::beg</code> for our reading operation. We will need to allocate a buffer
+to read the file into, and we need to determine the size of the buffer. Dividing the file length as 
+computed with <code>tellg()</code> by the size of each element in our buffer will give us the amount
+of elements to allocate in our buffer. After the buffer is allocated we read the file contents into it
+and print it out. Let's do the same for our <code>uint8_t</code> array</p>
+<pre><code class="language-javascript">std::ifstream inf("./char.uint8_t",std::ios::binary);
+if(inf.is_open()){
+  inf.seekg(0,std::ios::end);
+  int fsz=inf.tellg();
+  inf.seekg(0,std::ios::beg);
+  int nel=fsz/sizeof(char);
+  uint8_t *buf=new uint8_t[nel];
+  inf.read((char*)buf,fsz);
+  inf.close();
+  for(int i=0;i&lt;nel;i++){
+    std::cout&lt;&lt;(int)buf[i]&lt;&lt;" ";
+  }
+  delete [] buf;
+  std::cout&lt;&lt;std::endl;
+}else{
+  std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+}</code></pre>
+<p>Again, we resort to some casting to <code>char*</code> in <code>read()</code> as well as to <code>int</code>
+in <code>std::cout</code> in order to print it out.</p>
+<h3>Reading and Writing Classes</h3>
+<p>Simple types and structs are contiguously stored in memory. Classes are not. Classes contain member
+functions, and write and read operations will write addresses of functions if care is not taken. In order
+to serialize or deserialize a class to a stream, care needs to be taken in order to forego serializing
+and deserializing aspects of a class instance that is inappropriateSimple types and structs are contiguously stored in memory. Classes are not. Classes contain member
+functions, and write and read operations will write addresses of functions if care is not taken. In order
+to serialize or deserialize a class to a stream, care needs to be taken in order to forego serializing
+and deserializing aspects of a class instance that is inappropriate. The following illustrates how you might
+wright and use your class along with binary streams for serialization and deserialization</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;fstream&gt;
+#include&lt;vector&gt;
+#include&lt;sstream&gt;
+class Bar{
+  public:
+    Bar(int barP=0,float bazP=0.0,std::string quxP="");
+    void print()const;
+    void save(std::ofstream&amp; outf)const;
+    void load(std::ifstream&amp; inf);
+  private:
+    int bar;
+    float baz;
+    std::string qux;
+};
+Bar::Bar(int barP,float bazP,std::string quxP)
+    :bar(barP),
+     baz(bazP),
+     qux(quxP)
+{}
+void Bar::print()const{
+  std::cout&lt;&lt;"["
+           &lt;&lt;bar&lt;&lt;","
+           &lt;&lt;baz&lt;&lt;","
+           &lt;&lt;qux
+           &lt;&lt;"]"
+           &lt;&lt;std::endl;
+}
+void Bar::save(std::ofstream&amp; outf)const{
+  outf.write((char*)&amp;bar,sizeof(bar));
+  outf.write((char*)&amp;baz,sizeof(baz));
+  outf.write(qux.c_str(),qux.size()+1);
+};
+void Bar::load(std::ifstream&amp; inf){
+  inf.read((char*)&amp;bar,sizeof(bar));
+  inf.read((char*)&amp;baz,sizeof(baz));
+  std::stringstream ss;
+  char c;
+  do{
+    inf.read(&amp;c,1);
+    ss&lt;&lt;c;
+  }while(c!='\0');
+  qux=ss.str();
+};
+int main(int argc,char** argv){
+  //writing class array
+  {
+    std::ofstream outf("./bararr.bin",std::ios::binary);
+    if(outf.is_open()){
+      std::vector&lt;Bar&gt; buf={
+        {0,1.1,"Foo"},
+        {1,2.2,"Bar"},
+        {2,3.3,"Baz"}
+      };
+      for(auto b:buf){
+        b.print();
+        b.save(outf);
+      }
+      outf.close();
+    }else{
+      std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+    }
+  }
+  //reading class array
+  {
+    if(inf.is_open()){
+      std::vector&lt;Bar&gt; buf;
+      inf.seekg(0,std::ios::end);
+      int fsz=inf.tellg();
+      inf.seekg(0,std::ios::beg);
+      while(inf.tellg()!=fsz){
+        std::cout&lt;&lt;inf.tellg()&lt;&lt;std::endl;
+        Bar b;
+        b.load(inf);
+        buf.push_back(b);
+      }
+      for(auto b:buf){
+        b.print();
+      }
+      inf.close();
+    }else{
+      std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+    }
+  }
+  return 0;
+}</code></pre>
+<p>Special care needs to be taken when serializing and deserializing <code>std::string</code> members to streams. The <code>\0</code> <i>cstring</i> terminator needs to be written out and used as a sentinal for determining when to stop reading characters to populate the class member. Running <code>xxd</code> <code>bararr.bin</code> produces the following output</p>
+<pre><code class="language-javascript">00000000: 0000 0000 cdcc 8c3f 466f 6f00 0100 0000  .......?Foo.....
+00000010: cdcc 0c40 4261 7200 0200 0000 3333 5340  ...@Bar.....33S@
+00000020: 4261 7a00                                Baz.</code></pre>
+<h3>STL: Stream Iterators</h3>
+<p>The <code>STL</code> provides <code>std::istream_iterator</code> and <code>std::ostream_iterator</code> for providing input stream and output stream iterators, facilitating uniform interfaces and use of <code>STL</code> algorithms like copying, sorting, <i>etc</i>.</p>
+<p>Let's look at writing a <code>std::vector</code> of <code>uint8_t</code> to <code>std::ofstream</code> using
+<code>std::ostream_iterator</code></p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;iterator&gt;
+#include&lt;algorithm&gt;
+#include&lt;numeric&gt;
+#include&lt;fstream&gt;
+#include&lt;vector&gt;
+int main(int argc,char** argv){
+  std::ofstream outf("./uint8_t.bin",std::ios::binary|std::ios::out);
+  if(outf.is_open()){
+    std::vector&lt;uint8_t&gt; buf(32);
+    std::iota(std::begin(buf),std::end(buf),0);
+    std::ostream_iterator&lt;uint8_uint8_tt&gt; osi(outf);
+    std::copy(buf.begin(),buf.end(),osi);
+    outf.close();
+  }else{
+    std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p>In the above we open an <code>std::ofstream</code>, create a <code>std::vector&lt;uint8_t&gt;</code> and populate it using <code>std::iota</code>, and then populate the <code>std::ofstream</code> using an
+<code>std::ostream_iterator&lt;char&gt;</code> using <code>std::copy</code></p>
+<p>Let's take a look at writing <code>std::vector</code> of <code>struct</code> with <code>std::ostream_iterator</code> and <code>std::copy</code>. First, <code>std::ostream_iterator</code> calls <code>operator&lt;&lt;</code> internally to do its copying to <code>std::ostream</code>, so we need to define <code>opterator&lt;&lt;</code> for <code>std::ostream</code> and our <code>struct</code>. The following serves as example</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;iterator&gt;
+#include&lt;algorithm&gt;
+#include&lt;numeric&gt;
+#include&lt;fstream&gt;
+#include&lt;vector&gt;
+#include&lt;stdio.h&gt;
+struct Foo{
+  uint8_t bar;
+  uint32_t baz;
+  float qux;
+  char klutz[8];
+};
+std::ostream&amp; operator&lt;&lt;(std::ostream&amp; os,const Foo&amp; foo){   
+  os.write((char*)&amp;(foo.bar),sizeof(foo.bar));
+  os.write((char*)&amp;(foo.baz),sizeof(foo.baz));
+  os.write((char*)&amp;(foo.qux),sizeof(foo.qux));
+  os.write(foo.klutz,sizeof(foo.klutz));
+  return os;
+}
+int main(int argc,char** argv){
+  //write
+  {
+    std::ofstream outf("./struct.bin",std::ios::binary|std::ios::out);
+    if(outf.is_open()){
+      std::vector&lt;struct Foo&gt; buf;
+      for(int i=0;i&lt;8;i++){
+        struct Foo b;
+        b.bar=0;
+        b.baz=1;
+        b.qux=2.3;
+        buf.push_back(b);
+        sprintf(b.klutz,"foo");
+      }
+      std::ostream_iterator&lt;struct Foo&gt; osi(outf);
+      std::copy(buf.begin(),buf.end(),osi);
+      outf.close();
+    }else{
+      std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+    }
+  }
+  return 0;
+}</code></pre>
+<p>In the above, we define <code>struct Foo</code> containing a <code>uint8_t</code>, <code>uint32_t</code>, <code>float</code> and <code>char[8]</code>. We also define <code>std::ostream&amp; operator&lt;&lt;(std:;ostream&amp;,const Foo&amp;)</code> in order to define the behavior <code>std::ostream_iterator</code> will follow when writing a <code>struct Foo</code>. In our <code>main()</code> function we create a <code>std::vector</code> of <code>struct Foo</code> and write it to <code>struct.bin</code> using <code>std::ostream_iterator</code> and <code>std::copy</code>. Here is the contents of <code>struct.bin</code> output using <code>xxd</code>.</p>
+<pre><code class="language-javascript">00000000: 0001 0000 0033 3313 4000 0000 0000 0000  .....33.@.......
+00000010: 0000 0100 0000 3333 1340 666f 6f00 0000  ......33.@foo...
+00000020: 0000 0001 0000 0033 3313 4066 6f6f 0000  .......33.@foo..
+00000030: 0000 0000 0100 0000 3333 1340 666f 6f00  ........33.@foo.
+00000040: 0000 0000 0001 0000 0033 3313 4066 6f6f  .........33.@foo
+00000050: 0000 0000 0000 0100 0000 3333 1340 666f  ..........33.@fo
+00000060: 6f00 0000 0000 0001 0000 0033 3313 4066  o..........33.@f
+00000070: 6f6f 0000 0000 0000 0100 0000 3333 1340  oo..........33.@
+00000080: 666f 6f00 0000 0000                      foo.....</code></pre>
+<p>Now let's take a look at writing out <code>class</code> instances using <code>std::ostream_iterator</code> and <code>std::copy</code>. Again, we need to overload the <i>stream insertion</i> operator. The
+following is similar to writing <code>std::vector</code> of <code>struct</code>, but this time with a
+class having a <code>friend</code> function <code>operator&lt;&lt;</code></p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;iterator&gt;
+#include&lt;algorithm&gt;
+#include&lt;numeric&gt;
+#include&lt;fstream&gt;
+#include&lt;vector&gt;
+class Bar{
+  public:
+    Bar(
+      uint8_t barP=0,
+      uint32_t bazP=2,
+      float quxP=3.4,
+      std::string klutzP="foo"
+    );
+    friend std::ostream&amp; operator&lt;&lt;(std::ostream &amp;outs,const Bar &amp;b); 
+  private:
+    uint8_t bar;
+    uint32_t baz;
+    float qux;
+    std::string klutz;
+};
+Bar::Bar(
+  uint8_t barP,
+  uint32_t bazP,
+  float quxP,
+  std::string klutzP
+)
+    :bar(barP),
+     baz(bazP),
+     qux(quxP),
+     klutz(klutzP)
+{}
+
+std::ostream&amp; operator&lt;&lt;(std::ostream&amp; outs,const Bar&amp; b){   
+  outs.write((char*)&amp;(b.bar),sizeof(b.bar));
+  outs.write((char*)&amp;(b.baz),sizeof(b.baz));
+  outs.write((char*)&amp;(b.qux),sizeof(b.qux));
+  outs.write(b.klutz.c_str(),b.klutz.size()+1);
+  return outs;
+}
+int main(int argc,char** argv){
+  //write
+  {
+    std::ofstream outf("./class.bin",std::ios::binary|std::ios::out);
+    if(outf.is_open()){
+      std::vector&lt;Bar&gt; buf;
+      for(int i=0;i&lt;8;i++){
+        Bar b(0,1,2.3,"foo");
+        buf.push_back(b);
+      }
+      std::ostream_iterator&lt;Bar&gt; osi(outf);
+      std::copy(buf.begin(),buf.end(),osi);
+      outf.close();
+    }else{
+      std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+    }
+  }
+  return 0;
+}</code></pre>
+<p>The output of <code>class.bin</code> using <code>xxd</code> looks as follows</p>
+<pre><code class="language-javascript">00000000: 0001 0000 0033 3313 4066 6f6f 0000 0100  .....33.@foo....
+00000010: 0000 3333 1340 666f 6f00 0001 0000 0033  ..33.@foo......3
+00000020: 3313 4066 6f6f 0000 0100 0000 3333 1340  3.@foo......33.@
+00000030: 666f 6f00 0001 0000 0033 3313 4066 6f6f  foo......33.@foo
+00000040: 0000 0100 0000 3333 1340 666f 6f00 0001  ......33.@foo...
+00000050: 0000 0033 3313 4066 6f6f 0000 0100 0000  ...33.@foo......
+00000060: 3333 1340 666f 6f00                      33.@foo.</code></pre>
+<p>Also, we want to be able to differentiate between writing to a binary stream as opposed to writing
+to a text stream.</p>
+<p>Next, let's take a look at reading from a binary stream using <code>std::istream_iterator</code>. In the following example we populate a <code>std::vector&lt;uint8_t&gt;</code> from a <code>std::ifstream</code> using <code>std::istream_iterator</code> and <code>std::copy</code></p>
+<pre><code class="language-javascript">std::ifstream inf("./uint8_t.bin",std::ios::binary);
+if(inf.is_open()){
+  std::vector&lt;uint8_t&gt; buf;
+  std::istream_iterator&lt;uint8_t&gt; isi(inf);
+  std::copy(
+    isi,
+    std::istream_iterator&lt;uint8_t&gt;(),//eos iterator
+    std::back_inserter(buf)
+  );
+  inf.close();
+  for(auto a:buf){
+    std::cout&lt;&lt;(int)a&lt;&lt;" ";
+  }
+  std::cout&lt;&lt;std::endl;
+}else{
+  std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+}</code></pre>
+<p>In the above, <code>std::istream_iterator&lt;uint8_t&gt;()</code> creates the default input stream iterator for <code>uint8_t</code>. This is the so called <i>end-of-stream</i> iterator,
+that indicates the end of the <code>std::ifstream</code> has been reached in the iteration</p>
+<p>The above pattern can also be used to read in <code>struct</code>s that were serialized to a
+binary file. First, as with serialization from a <code>struct</code> to an outputstream, we need to implement the appropriate operator overload. The following serves as illustration</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;iterator&gt;
+#include&lt;algorithm&gt;
+#include&lt;numeric&gt;
+#include&lt;fstream&gt;
+#include&lt;vector&gt;
+struct Foo{
+  uint8_t bar;
+  uint32_t baz;
+  float qux;
+  char klutz[8];
+};
+std::istream&amp; operator&gt;&gt;(std::istream &amp; ins, Foo&amp; foo){
+  ins.read((char*)&amp;(foo.bar),sizeof(foo.bar));
+  ins.read((char*)&amp;(foo.baz),sizeof(foo.baz));
+  ins.read((char*)&amp;(foo.qux),sizeof(foo.qux));
+  ins.read(foo.klutz,sizeof(foo.klutz));
+  return ins;
+}
+int main(int argc,char** argv){
+  std::ifstream inf("./struct.bin",std::ios::binary);
+  if(inf.is_open()){
+    std::vector&lt;struct Foo&gt; buf;
+    std::istream_iterator&lt;struct Foo&gt; isi(inf);
+    std::copy(
+      isi,
+      std::istream_iterator&lt;struct Foo&gt;(),//eos iterator
+      std::back_inserter(buf)
+    );
+    inf.close();
+    for(auto a:buf){
+      std::cout&lt;&lt;"["
+         &lt;&lt;(int)a.bar&lt;&lt;","
+         &lt;&lt;(int)a.baz&lt;&lt;","
+         &lt;&lt;a.qux&lt;&lt;","
+         &lt;&lt;a.klutz&lt;&lt;","
+         &lt;&lt;"]"
+         &lt;&lt;" "
+      ;
+    }
+    std::cout&lt;&lt;std::endl;
+  }else{
+    std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+  }
+  return 0;
+}</code></pre>
+<p>In the above we overload <code>operator&lt;&lt;</code> for <code>struct Foo</code> as this is
+used internally by <code>std::istream_iterator&lt;struct Foo&gt;</code> when used in the
+<code>std::copy</code> algorithm</p>
+<p>Let's move on to deserializing <code>class</code>es from <code>std::istream</code> using <code>std::istream_iterator</code> and the <code>std::copy</code> algorithm. Again, we need to overload <code>operator&gt;&gt;</code> for <code>std::istream_iterator&lt;Bar&gt;</code>, the input stream iterator for our class <code>Bar</code>. The following serves as illustration</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;iterator&gt;
+#include&lt;algorithm&gt;
+#include&lt;numeric&gt;
+#include&lt;fstream&gt;
+#include&lt;vector&gt;
+#include&lt;sstream&gt;
+class Bar{
+  public:
+    Bar(
+      uint8_t barP=0,
+      uint32_t bazP=2,
+      float quxP=3.4,
+      std::string klutzP="foo"
+    );
+    void print(){
+      std::cout&lt;&lt;"["
+               &lt;&lt;(int)bar&lt;&lt;","
+               &lt;&lt;(int)baz&lt;&lt;","
+               &lt;&lt;qux&lt;&lt;","
+               &lt;&lt;klutz
+               &lt;&lt;"]"
+               &lt;&lt;std::endl
+      ;
+    };
+    friend std::ostream&amp; operator&lt;&lt;(std::ostream &amp;outs,const Bar &amp;b); 
+    friend std::istream&amp; operator&gt;&gt;(std::istream&amp; inst,Bar&amp; bar);
+  private:
+    uint8_t bar;
+    uint32_t baz;
+    float qux;
+    std::string klutz;
+};
+Bar::Bar(
+  uint8_t barP,
+  uint32_t bazP,
+  float quxP,
+  std::string klutzP
+)
+    :bar(barP),
+     baz(bazP),
+     qux(quxP),
+     klutz(klutzP)
+{}
+std::ostream&amp; operator&lt;&lt;(std::ostream&amp; outs,const Bar&amp; b){   
+  outs.write((char*)&amp;(b.bar),sizeof(b.bar));
+  outs.write((char*)&amp;(b.baz),sizeof(b.baz));
+  outs.write((char*)&amp;(b.qux),sizeof(b.qux));
+  outs.write(b.klutz.c_str(),b.klutz.size()+1);
+  return outs;
+}
+std::istream&amp; operator&gt;&gt;(std::istream &amp; ins, Bar&amp; bar){
+  ins.read((char*)&amp;(bar.bar),sizeof(bar.bar));
+  ins.read((char*)&amp;(bar.baz),sizeof(bar.baz));
+  ins.read((char*)&amp;(bar.qux),sizeof(bar.qux));
+  std::stringstream ss;
+  char c;
+  do{
+    ins.read(&amp;c,1);
+    ss&lt;&lt;c;
+  }while(c!='\0');
+  bar.klutz=ss.str();
+  return ins;
+}
+int main(int argc,char** argv){
+  std::ifstream inf("./class.bin",std::ios::binary);
+  if(inf.is_open()){
+    std::vector&lt;Bar&gt; buf;
+    std::istream_iterator&lt;Bar&gt; isi(inf);
+    std::copy(
+      isi,
+      std::istream_iterator&lt;Bar&gt;(),//eos iterator
+      std::back_inserter(buf)
+    );
+    inf.close();
+    for(auto a:buf){
+      a.print();
+    }
+    std::cout&lt;&lt;std::endl;
+  }else{
+    std::cerr&lt;&lt;"Error: Could not open file"&lt;&lt;std::endl;
+  }
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

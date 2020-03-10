@@ -1,0 +1,5 @@
+accept: application/json
+title: gcc - shared object
+status: publish
+type: Post
+image: cpp.png

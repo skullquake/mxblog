@@ -1,0 +1,280 @@
+<p>
+	Let's take a look at programming the NES using cc65.
+</p>
+<h3>
+	About the Famicom
+</h3>
+<p>
+	First a bit about the Famicom. The Famicom (Family Computer or FC) was released in 1983 in Japan,
+	then in 1985 in the USA and in 1986 it had a full launch to the
+	rest of North America and parts of Europe and other coutries
+	in 1987. It's an 8-bit third-generation home video console
+	based on the 179 MHz Ricoh 2A03 containing a second sourced 
+	MOS 6502 core modified to disable the 6502's binary-coded
+	decimal mode. It also had rudimentary DMA, game controller
+	polling and sound chip. It has 2 kB of RAM, but the cartridges
+	may also contain RAM to increase this. Game cartridge RAM
+	varies from 8 kB to 1 MB, the most common sizes are
+	128 kB to 384 kB.
+</p>
+<p>
+	The PPU features 2 kB of video RAM, 256 bytes of OAM 
+	(<i>object attribute memory</i>) to store positions, colors,
+	tile indeces, etc., with 48 colors and 6 grays and 25
+	simulataneous colors can be used. A total of 64 sprites
+	can be displayed at a time, and it has a resolution of 
+	256x240.
+</p>
+<p>
+	The stnadard NES has 5 sound channels, two of which
+	are PWM, one a triangle and another a noise generator
+</p>
+<p>
+	The memory layout for the CPU is as follows
+</p>
+<div class="row">
+	<div class="col-sm-8 col-sm-offset-2">
+		<div class="well">
+			<table>
+				<tr>
+					<td>
+						<code>$0000-$07FF</code>
+					</td>
+					<td>
+						Internal RAM
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$0800-$1FFF</code>
+					</td>
+					<td>
+						Mirror of the Above
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$2000-$2007</code>
+					</td>
+					<td>
+						PPU Registers
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$2008-$3FFF</code>
+					</td>
+					<td>
+						Mirror of the Above
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$4000-$4017</code>
+					</td>
+					<td>
+						APU Registers/Controllers
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$4018-$5FFF</code>
+					</td>
+					<td>
+						N/A
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$6000-$7FFF</code>
+					</td>
+					<td>
+						Cartridge RAM 
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$8000-$FFFF</code>
+					</td>
+					<td>
+						Cartridge ROM
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$FFFA-$FFFB</code>
+					</td>
+					<td>
+						NMI Vector
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$FFFC-$FFFD</code>
+					</td>
+					<td>
+						Reset Vector
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$FFFE-$FFFF</code>
+					</td>
+					<td>
+						IRQ/BRK Vector
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+<p>
+	For the PPU, the memory map is as follows
+</p>
+<div class="row">
+	<div class="col-sm-8 col-sm-offset-2">
+		<div class="well">
+			<table>
+				<tr>
+					<td>
+						<code>$0000-$0FFF</code>
+					</td>
+					<td>
+						Tileset #0
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$1000-$1FFF</code>
+					</td>
+					<td>
+						Tileset #1
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$2000-$23FF</code>
+					</td>
+					<td>
+						Nametable #0
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$2400-$27FF</code>
+					</td>
+					<td>
+						Nametable #1
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$2800-$2BFF</code>
+					</td>
+					<td>
+						Nametable #2
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$2C00-$2FFF</code>
+					</td>
+					<td>
+						Nametable #3
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$3000-$3EFF</code>
+					</td>
+					<td>
+						Mirror of $2000-$2EFF
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$3F00-$3F1F</code>
+					</td>
+					<td>
+						Colour Palette
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<code>$3F20-$3FFF</code>
+					</td>
+					<td>
+						Mirror of Palette
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+</div>
+<p>
+	<i>Nametable</i> is just a technical word for tilemap or
+	background. There is only enough internal VRAM for 2
+	usable nametables. <code>OAM</code> is another 256 bytes
+	of memory dedicated to Sprites, however its volatile,
+	and needs to be rewritten every frame.
+</p>
+<p>
+	The vertical and horizontal mirroring is used for 
+	sideways or vertical scrolling.
+</p>
+<p>
+	NES cartridges usually have 2 onboard ROM chips, PRG-ROM
+	for executable code and CHR-ROM for graphics. Some
+	cartridges have CHR-RAM, with the graphics located somewhere
+	in the PRG-ROM in that case. The program then has to 
+	transfer the bytes from PRG-RAM to CHR-RAM.
+</p>
+<h3>
+	Prerequisites
+</h3>
+<p>
+	In order to create NES programs you will need an assembler or
+	compiler, a tile editor, a raster editor, text editor, 
+	tilemap program, and emulator, some scripting language
+	or build system.
+</p>
+<p>
+	We'll use <code>cc65</code> for writing the code,
+	<code>YY-CHR</code> for graphics, <code>GIMP</code>
+	for raster editing, <code>vim</code> as a text editor,
+	and <code>FCEUX</code> for emulation. For map editing
+	we can use <code>NES Screen Tool</code> and
+	<code>Tiled</code>.
+</p>
+<h3>
+	cc65 Hello nes
+</h3>
+<p>
+	Let's take a look at how we can create <i>hello world</i>
+	in <code>c</code> using <code>cc65</code>
+</p>
+<pre><code class="language-c">#include&lt;nes.h&gt;
+#include&lt;conio.h&gt;
+int main(int argc,char** argv){
+	cputsxy(10,10,"Hello");
+	for(;;);
+	return 0;
+}</code></pre>
+<p>
+	You can compile the above using the following 
+	<code>makefile</code>
+</p>
+<pre><code class="language-makefile">CC=cl65
+SRC=./src/a.c
+BIN=./bin/a.nes
+ARC=nes
+$(BIN):$(SRC)
+	$(CC) -t $(ARC) $(SRC) -o $(BIN)
+.phony:\
+	clean
+clean:
+	rm $(BIN)</code></pre>
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>

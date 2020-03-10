@@ -1,0 +1,40 @@
+<p>STL <code>rotate_copy</code> does the same as <code>rotate</code> except that it does
+not manipulate the underlaying collection, instead producing output via an <i>output iterator</i>. <code>rotate_copy</code> takes four parameters, the beginnin of the input collecion, the cycle position to end up at the beginning after the shift operation, the end of the input collection, and the output iterator.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+int main(int argc,char** argv){
+  //rotate left
+  {
+    std::vector&lt;int&gt; a={0,1,2,3,4};
+    std::vector&lt;int&gt; b;
+    for(auto c:a){
+      std::cout&lt;&lt;c&lt;&lt;" ";
+    }
+    std::cout&lt;&lt;std::endl;
+    std::rotate_copy(a.begin(),a.begin()+1,a.end(),std::back_inserter(b));
+    for(auto c:b){
+      std::cout&lt;&lt;c&lt;&lt;" ";
+    }
+    std::cout&lt;&lt;std::endl;
+  }
+  //rotate right 
+  {
+    std::vector&lt;int&gt; a={0,1,2,3,4};
+    std::vector&lt;int&gt; b;
+    for(auto c:a){
+      std::cout&lt;&lt;c&lt;&lt;" ";
+    }
+    std::cout&lt;&lt;std::endl;
+    std::rotate_copy(a.begin(),a.begin()+a.size()-1,a.end(),std::back_inserter(b));
+    for(auto c:b){
+      std::cout&lt;&lt;c&lt;&lt;" ";
+    }
+    std::cout&lt;&lt;std::endl;
+  }
+
+  return 0;
+}</code></pre>
+<p>In the above we perform a right rotate by adding the vector size to the vectors first iterator and subtracting 1</p>
+<script>
+	Prism.highlightAll()
+</script>

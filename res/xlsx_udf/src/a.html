@@ -1,0 +1,297 @@
+<p>Let's take a look at defining <code>udf</code>s in Microsoft Excel. To get started, here are the steps</p>
+<ol>
+	<li>
+		Open a new workbook
+	</li>
+	<li>
+		Activate developer tools (this changes with every version of excel, so no use in describing that)
+	</li>
+	<li>
+		Open <i>Microsoft Visual Basic for Application</i>, essentially the IDE to do all you programming
+	</li>
+	<li>
+		In the project tree, add a module to the top level node
+	</li>
+	<li>
+		Save with <code>ctrl-s</code> and choose the relevant option to enable the macros in the workbook (<code>.xlsm</code>)
+	</li>
+</ol>
+<p>Here's a sample adding function, just for testing</p>
+<pre><code class="language-javascript">Public Function MyAdd(a As Integer,b As Integer) as Long
+	MyAdd=a+b
+End Function</code></pre>
+<p>From the workbook you can now call <code>MyAdd</code> with something like <code>=MyAdd(1;2)</code></p>
+<h3>Using Libraries</h3>
+<p>The following illustrates using libraries. Libraries can be included at runtime by loading a <code>dll</code> using a specific
+function call, or can be included by going to <code>Tools-&gt;References...</code>.
+<p>The following <code>udf</code>s provide some functions to work with files. <code>FsRecNewest</code> searches
+the directory specified in <code>pth</code> recursively for files and returns the newest file. Only the
+first argument is intended to be populated in the call, the other <code>Optional</code> arguments are used
+to communicate information between the recursive and was used for the reason taht Excel <code>VBA</code> has some problems with
+using global variables.</p>
+<pre><code class="language-javascript">Public Function FsRecNewest(pth As String, Optional ret As String, Optional dat As Date) As String
+  If IsMissing(ret) Then
+    ret = Empty
+  End If
+  Dim Folder As Variant
+  Dim FSO As FileSystemObject
+  Set FSO = New FileSystemObject
+  If FSO.FolderExists(pth) Then
+    Set objFolder = FSO.GetFolder(pth)
+    For Each objFile In objFolder.Files
+      If IsMissing(dat) Then
+        ret = objFile.Path
+        dat = objFile.DateLastModified
+      Else
+        If objFile.DateLastModified &gt; dat Then
+          ret = objFile.Path
+          dat = objFile.DateLastModified
+        Else
+        End If
+      End If
+    Next objFile
+    For Each objFolder In objFolder.Subfolders
+        ret = FsRecNewest(objFolder.Path, ret, dat)
+    Next objFolder
+  Else
+    ret = "Error: Invalid Path"
+  End If
+  If Len(ret) = 0 Then
+    ret = "Error: No Files Found"
+  End If
+  FsRecNewest = ret
+End Function</code></pre>
+<p><code>FileSystemObject</code> can be used for general file operations like finding files and folders and attribute inspection like checking the name, path, creation date <i>etc.</i> of a file or folder.</p>
+<p>The <code>Optional</code> keywords indicate that an argument is <i>optional</i> and can be
+left out when calling the function. When an argument is optional and you want to determine if it was
+not given a specific value in the call you can use the <code>IsMissing()</code> function. In the above we do so in order to initialize <code>ret</code> and <code>dat</code> based on <code>IsMissing(dat)</code>, which will take place in the first iteration of <code>FsRecNewest</code>. Consecutive calls to <code>FsRecNewest</code> will pass <code>ret</code> and <code>dat</code> explicitly, and in their execution the <code>If</code> statement based on <code>IsMissing</code> whithing the file iteration loop will not execute.</p>
+<p>The following function <code>FsRecOldest</code> is similar, but returns the oldest file.</p>
+<pre><code class="language-javascript">Public Function FsRecOldest(pth As String, Optional ret As String, Optional dat As Date) As String
+  If IsMissing(ret) Then
+    ret = Empty
+  End If
+  Dim Folder As Variant
+  Dim FSO As FileSystemObject
+  Set FSO = New FileSystemObject
+  If FSO.FolderExists(pth) Then
+    Set objFolder = FSO.GetFolder(pth)
+    For Each objFile In objFolder.Files
+      If IsMissing(dat) Then
+        ret = objFile.Path
+        dat = objFile.DateLastModified
+      Else
+        If objFile.DateLastModified &gt; dat Then
+        Else
+          ret = objFile.Path
+          dat = objFile.DateLastModified
+        End If
+      End If
+    Next objFile
+    For Each objFolder In objFolder.Subfolders
+        ret = FsRecOldest(objFolder.Path, ret, dat)
+    Next objFolder
+  Else
+    ret = "Error: Invalid Path"
+  End If
+  If Len(ret) = 0 Then
+    ret = "Error: No Files Found"
+  End If
+  FsRecOldest = ret
+End Function</code></pre>
+<p>The following function <code>FsCreated</code> returns the created date of the file specified by <code>pth</code>.</p>
+<pre><code class="language-javascript">Public Function FsCreated(pth As String) As Date
+  Dim FSO As FileSystemObject
+  Set FSO = New FileSystemObject
+  If FSO.FileExists(pth) Then
+    FsCreated = FSO.GetFile(pth).DateCreated
+  Else
+    FsCreated = "File not found"
+  End If
+End Function</code></pre>
+<p>The following function <code>FsModified</code> returns the modification date of the file specified by <code>pth</code>.</p>
+<pre><code class="language-javascript">Public Function FsModified(pth As String) As Date
+  Dim FSO As FileSystemObject
+  Set FSO = New FileSystemObject
+  If FSO.FileExists(pth) Then
+    FsModified = FSO.GetFile(pth).DateLastModified
+  Else
+    FsModified = "File not found"
+  End If
+End Function</code></pre>
+<p>The following function <code>FsSize</code> returns the file size in bytes of the file specified by <code>pth</code>.</p>
+<pre><code class="language-javascript">Public Function FsSize(pth As String) As Integer
+  Dim FSO As FileSystemObject
+  Set FSO = New FileSystemObject
+  If FSO.FileExists(pth) Then
+    FsSize = FSO.GetFile(pth).Size
+    'FsSize = FileLen(pth)
+  Else
+    FsSize = "File not found"
+  End If
+End Function</code></pre>
+<p>The following function <code>FsCat</code> returns contents of the file specified by <code>pth</code>.</p>
+<pre><code class="language-javascript">Public Function FsCat(pth As String) As String
+  Dim fil As Object
+  Dim ins As Variant
+  Dim txt As String
+  Dim txtspl As String
+  Dim FSO As FileSystemObject
+  Set FSO = New FileSystemObject
+  If FSO.FileExists(pth) Then
+    If FileLen(pth) &gt; 1 Then
+      Set fil = FSO.OpenTextFile(pth, 1)
+      txt = fil.ReadAll
+      fil.Close
+      FsCat = txt
+    Else
+      FsCat = "No Contents"
+    End If
+  Else
+    FsCat = "File not found"
+  End If
+End Function</code></pre>
+<h3>MinGW DLLs</h3>
+<p>Now on to something a bit more interesting. It is possible to compile <code>DLL</code>s that
+interface with <code>VBA</code> using the Microsoft compiler, but let's take a look at creating
+and using <code>DLL</code>s in <code>VBA</code> for Excel using the Windows port of <code>gcc</code>
+: <code>mingw</code>.</p>
+<p>First some prerequisites. You can install <code>Msys2</code> which comes with <code>mingw32-gcc</code>
+and <code>mingw64-gcc</code> or install <code>wsl</code> <code>Ubuntu</code> and
+install the <code>mingw</code> cross compiler and use that. Let's take a look at our
+<code>Makefile</code> first.</p>
+<pre><code class="language-javascript">CXX=g++
+VBC=C:/Windows/Microsoft.NET/Framework/v4.0.30319/vbc.exe
+LIBDIR=./lib
+BINDIR=./bin
+LIBSRC=./src/lib.cpp
+LIBCFLAGS=-I./src
+LIBNAM=a
+LIB=./lib/$(LIBNAM).dll
+LIBS=./lib/$(LIBNAM).a
+LIBOBJ=./bin/$(LIBNAM).o
+LIBDEF=./lib/$(LIBNAM).def
+LIBDEF2=./lib/$(LIBNAM)2.def
+LIBMAP=./lib/$(LIBNAM).map
+LIBMAP@=./lib/$(LIBNAM).map
+APPSRC=./src/app.cpp
+APPCFLAGS=-I./src -L./lib
+APPBIN=./bin/app.exe
+APPLDFLAGS=-la
+APPOBJ=./bin/app.o
+VBAPPSRC=./src/a.bas
+VBAPPNAM=vbapp
+VBAPPBIN=./bin/$(VBAPPNAM).exe
+all:$(APPBIN) $(VBAPPBIN)
+$(VBAPPBIN):$(VBAPPSRC) $(LIB)
+	$(VBC)\
+		/out:$(VBAPPNAM)\
+		/main:MainModule\
+		/target:exe\
+		$(shell echo $(VBAPPSRC)|sed 's/\//\\\//g')
+	mv ./$(VBAPPNAM).exe $(VBAPPBIN)
+$(APPBIN):$(APPOBJ) $(LIB)
+	$(CXX)\
+		$(APPCFLAGS)\
+		$(APPOBJ)\
+		$(APPLDFLAGS)\
+		-o $(APPBIN)
+$(APPOBJ):$(APPSRC)
+	$(CXX)\
+		-c\
+		$(APPSRC)\
+		-o $(APPOBJ)
+$(LIB):$(LIBSRC)
+	g++ -c -DBUILDING_EXAMPLE_DLL $(LIBSRC) -o $(LIBOBJ) 
+	g++\
+		-shared\
+		-o $(LIB)\
+		$(LIBOBJ)\
+		--shared\
+		-s\
+		-Wl,--add-stdcall-alias,--subsystem,windows,--kill-at,-Map=$(LIBMAP),--output-def,$(LIBDEF)\
+		-o $(LIB)
+	ldd $(LIB)
+	cp $(LIB) ./res
+.phony:\
+	clean\
+	run
+clean:
+	rm\
+		$(LIB)\
+		./bin/*
+run: $(APPBIN)
+	@PATH=$$PATH:./lib $(APPBIN)
+runvb: $(VBAPPBIN)
+	@PATH=$$PATH:./lib $(VBAPPBIN)</code></pre>
+<p>This <code>makefile</code> does a couple of things. There are specifications for the <code>dll</code>
+source code files, objects, maps, defs, static lib, and shared library outputs. There are some specifications
+also for a <code>c++</code> test application source as well as a <code>vb</code> test source with their
+respective objects and binaries.</p>
+<p>For the <code>vb</code> test program we use the Microsoft <code>vbc.exe</code> compiler. Since 
+Microsoft uses escape sequences for their directory seperators we just use <code>sed</code> to get the
+paths right. Of relevance when building a <code>DLL</code> for <code>VBA</code> are the flags sent
+into <code>g++</code> for compilation and linking.</p>
+<p>Here is the library header</p>
+<pre><code class="language-javascript">#ifndef EXAMPLE_DLL_H
+#define EXAMPLE_DLL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+#ifdef BUILDING_EXAMPLE_DLL
+#define EXAMPLE_DLL __declspec(dllexport)
+#else
+#define EXAMPLE_DLL __declspec(dllimport)
+#endif
+int __stdcall EXAMPLE_DLL dub(int x);
+int __stdcall EXAMPLE_DLL rnd();
+#ifdef __cplusplus
+}
+#endif
+#endif</code></pre>
+<p>Our arbitrary test functions will simply generate a random number and double a number. And here is the source</p>
+<pre><code class="language-javascript">#include&lt;stdio.h&gt;
+#include&lt;string.h&gt;
+#include"lib.h"
+#include&lt;stdlib.h&gt;
+#include&lt;time.h&gt;
+__stdcall int dub(int x){
+        return 2*x;
+}
+__stdcall int rnd(){
+	srand(time(0));
+        return rand();
+}</code></pre>
+<p>Here is how you can use it in <code>Excel</code> <code>VBA</code></p>
+<pre><code class="language-javascript">#If Win64 Then
+    Public Declare PtrSafe Function rnd _
+    Lib "C:\opt\msys64\home\user\dev\g++\template\dllvba\lib\a.dll" _
+    () As Long
+    Public Declare PtrSafe Function dub _
+    Lib "C:\opt\msys64\home\user\dev\g++\template\dllvba\lib\a.dll" _
+    (ByVal a As Long) As Long
+#Else
+    Public Declare Function rnd _
+    Lib "c:\windows\system32\a.dll" _
+    () As Long
+    Public Declare Function dub _
+    Lib "C:\opt\msys64\home\user\dev\g++\template\dllvba\lib\a.dll" _
+    (ByVal a As Long) As Long
+#End If
+Public Function MyRnd() As String
+    Dim ret As Long
+    ret = rnd()
+    MyRnd = ret
+End Function
+Public Function MyDub(a As Long) As String
+    Dim ret As Long
+    MyDub = ret
+End Function</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
+
+
+
+
+
+

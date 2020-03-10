@@ -1,0 +1,35 @@
+<p>STL <code>std::find</code> searches a container for a value and returns
+an iterator that is either the element matched if it was found
+or <code>end()</code> if it was not found</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;algorithm&gt;
+int main(int argc,char** argv){
+  std::vector v={0,1,2,3};
+  std::vector&lt;int&gt;::iterator i;
+  {
+    i=std::find(v.begin(),v.end(),0);
+    if(i!=v.end()){
+      std::cout&lt;&lt;"found: ["&lt;&lt;(i-v.begin())&lt;&lt;"]"&lt;&lt;std::endl;
+    }else{
+      std::cout&lt;&lt;"not found"&lt;&lt;std::endl;
+    }
+  }
+  {
+    i=std::find(v.begin(),v.end(),32);
+    if(i!=v.end()){
+      std::cout&lt;&lt;"found: ["&lt;&lt;(i-v.begin())&lt;&lt;"]"&lt;&lt;std::endl;
+    }else{
+      std::cout&lt;&lt;"not found"&lt;&lt;std::endl;
+    }
+  }
+  return 0;
+}</code></pre>
+<p>Using the <code>Ranges</code> library you can forego iterators altogether as follows</p>
+<pre><code class="language-javascript">#include&lt;range/v3/all.hpp&gt;
+...
+auto i=ranges::find(v,1);
+...</code></pre>
+<script>
+  Prism.highlightAll()
+</script>

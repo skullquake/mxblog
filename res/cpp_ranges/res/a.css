@@ -1,0 +1,13 @@
+.page-Anonymous_pg_posts ._well{
+border: 0.5em solid #252c36!important;;
+padding: 1em;
+margin: 0.9em 0;
+overflow: auto;
+border: .3em solid hsl(30, 20%, 40%);
+border-radius: .5em;
+box-shadow: 1px 1px .5em black inset;
+  background:unset!important;
+}
+pre{
+  overflow:hidden!important;
+}
