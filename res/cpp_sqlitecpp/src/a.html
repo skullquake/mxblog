@@ -1,0 +1,245 @@
+<p>Let's take a look at <code><a href="https://github.com/SRombauts/SQLiteCpp">SRombauts/SQLiteCPP</a></code></p>
+<pre><code class="language-javascript">git clone https://github.com/SRombauts/SQLiteCpp
+cd ./SQLiteCpp
+mkdir ./build
+cd ./build
+cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr/local ../
+make -j8
+make install</code></pre>
+<p>This should compile a static library <code>libSQLiteCPP.a</code>. Using this as installed to <code>/usr/local</code>, your <code>makefile</code> might look as follows</p>
+<pre><code class="language-javascript">CXX=g++
+SRC=./src/a.cpp
+BIN=./bin/a.out
+CFLAGS=\
+	-I/usr/local/include\
+	-L/usr/local/lib\
+	`pkg-config --cflags sqlite3`
+LDFLAGS=\
+	-lSQLiteCpp\
+	`pkg-config --libs sqlite3`
+$(BIN):$(SRC)
+	$(CXX)\
+		$(CFLAGS)\
+		$(SRC)\
+		$(LDFLAGS)\
+		-o $(BIN)
+.phony:clean
+clean:
+	rm $(BIN)</code></pre>
+<p>Alternatively you can simply copy sources and headers from <code>SQLiteCpp/src</code> and <code>SQLiteCpp/include</code> to your project source tree and compile it in. Here is a simple application</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;string&gt;
+#include&lt;SQLiteCpp/SQLiteCpp.h&gt;
+#include&lt;SQLiteCpp/VariadicBind.h&gt;
+int main(int argc,char** argv){
+  SQLite::Database db("./db/a.db",SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE);
+  std::cout&lt;&lt;"Opened "&lt;&lt;db.getFilename()&lt;&lt;std::endl;
+  std::cout&lt;&lt;"Creating table...";
+  try{
+    {
+      SQLite::Transaction txn(db);
+      db.exec(R"(DROP TABLE IF EXISTS A)");
+      db.exec(R"(DROP TABLE IF EXISTS B)");
+      txn.commit();
+    }
+    {
+      SQLite::Transaction txn(db);
+      db.exec(R"(
+        CREATE TABLE A
+        (
+          id    INTEGER NOT NULL PRIMARY KEY,
+          val    TEXT,
+          b_id    INTEGER,
+          FOREIGN KEY  (b_id) REFERENCES B(id)
+        ))");
+      txn.commit();
+    }
+    {
+      SQLite::Transaction txn(db);
+      db.exec(R"(
+        CREATE TABLE B
+        (
+          id    INTEGER NOT NULL PRIMARY KEY,
+          val    TEXT,
+          a_id    INTEGER,
+          FOREIGN KEY  (a_id) REFERENCES A(id)
+        ))");
+      txn.commit();
+    }
+    {
+      SQLite::Transaction txn(db);
+      int na=2;
+      int aid=0;
+      int bid=0;
+      for(int i=0;i&lt;na;i++){
+        {
+          std::cout&lt;&lt;"Creating A"&lt;&lt;std::to_string(i)&lt;&lt;"...";
+          SQLite::Statement stmt(
+            db,
+            R"(
+              INSERT INTO A
+              (
+                id,
+                val
+              )
+              VALUES
+              (
+                ?,
+                ?
+              )
+            )"
+          );
+          stmt.bind( 1,aid);
+          stmt.bind( 2,std::string("A")+std::to_string(aid));
+          stmt.exec();
+          std::cout&lt;&lt;"done"&lt;&lt;std::endl;
+        }
+        {
+          std::cout&lt;&lt;"Creating B"&lt;&lt;std::to_string(i)&lt;&lt;"...";
+          SQLite::Statement stmt(
+            db,
+            R"(
+              INSERT INTO B
+              (
+                id,
+                val
+              )
+              VALUES
+              (
+                ?,
+                ?
+              )
+            )"
+          );
+          stmt.bind( 1,bid);
+          stmt.bind( 2,std::string("B")+std::to_string(bid));
+          stmt.exec();
+          std::cout&lt;&lt;"done"&lt;&lt;std::endl;
+        }
+        {
+          std::cout&lt;&lt;"UPDATING A"&lt;&lt;std::to_string(i)&lt;&lt;"...";
+          SQLite::Statement stmt(
+            db,
+            R"(
+              UPDATE A
+              SET
+                b_id=?
+              WHERE
+                id=?
+            )"
+          );
+          stmt.bind( 1,bid);
+          stmt.bind( 2,aid);
+          stmt.exec();
+          std::cout&lt;&lt;"done"&lt;&lt;std::endl;
+        }
+        {
+          std::cout&lt;&lt;"UPDATING B"&lt;&lt;std::to_string(i)&lt;&lt;"...";
+          SQLite::Statement stmt(
+            db,
+            R"(
+              UPDATE B
+              SET
+                a_id=?
+              WHERE
+                id=?
+            )"
+          );
+          stmt.bind( 1,aid);
+          stmt.bind( 2,bid);
+          stmt.exec();
+          std::cout&lt;&lt;"done"&lt;&lt;std::endl;
+        }
+
+        aid++;
+        bid++;
+
+
+      }
+      txn.commit();
+    }
+    {
+      SQLite::Statement q0(
+        db,
+        R"(
+          SELECT 
+          *
+          FROM A
+        )"
+        
+      );
+      while(q0.executeStep()){
+        std::cout&lt;&lt;"(";
+        for(int colidx=0;colidx&lt;q0.getColumnCount();colidx++){
+           std::cout&lt;&lt;q0.getColumn(colidx)&lt;&lt;",";
+        }
+        std::cout&lt;&lt;")"&lt;&lt;std::endl;
+        SQLite::Statement q1(
+          db,
+          R"(
+            SELECT 
+            *
+            FROM B
+            WHERE
+              id=?
+          )"
+          
+        );
+        q1.bind( 1,q0.getColumn("id").getInt());
+        while(q1.executeStep()){
+          std::cout&lt;&lt;"\t(";
+          for(int colidx=0;colidx&lt;q1.getColumnCount();colidx++){
+             std::cout&lt;&lt;q1.getColumn(colidx)&lt;&lt;",";
+          }
+          std::cout&lt;&lt;")"&lt;&lt;std::endl;
+        }
+        std::cout&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+      }
+    }
+    {
+      SQLite::Statement q0(
+        db,
+        R"(
+          SELECT 
+          *
+          FROM B
+        )"
+        
+      );
+      while(q0.executeStep()){
+        std::cout&lt;&lt;"(";
+        for(int colidx=0;colidx&lt;q0.getColumnCount();colidx++){
+           std::cout&lt;&lt;q0.getColumn(colidx)&lt;&lt;",";
+        }
+        std::cout&lt;&lt;")"&lt;&lt;std::endl;
+        SQLite::Statement q1(
+          db,
+          R"(
+            SELECT 
+            *
+            FROM A
+            WHERE
+              id=?
+          )"
+          
+        );
+        q1.bind( 1,q0.getColumn("id").getInt());
+        while(q1.executeStep()){
+          std::cout&lt;&lt;"\t(";
+          for(int colidx=0;colidx&lt;q1.getColumnCount();colidx++){
+             std::cout&lt;&lt;q1.getColumn(colidx)&lt;&lt;",";
+          }
+          std::cout&lt;&lt;")"&lt;&lt;std::endl;
+        }
+        std::cout&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+      }
+    }
+    std::cout&lt;&lt;"done."&lt;&lt;std::endl;
+  }catch(std::exception e){
+    std::cerr&lt;&lt;e.what()&lt;&lt;std::endl;
+  }
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>
