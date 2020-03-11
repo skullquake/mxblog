@@ -19,6 +19,7 @@ dos2unix ./_headers
 #--------------------------------------------------------------------------------
 $CURL \
 	$URL \
+	--insecure \
 	-H @_headers \
 	--data-binary $DATA >./response
 cat ./response

@@ -1,0 +1,19 @@
+<p>Let's look at <code>boost::split</code> which you can use to tokenize a <code>std::string</code></p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;boost/algorithm/string.hpp&gt;
+int main(int argc,char**argv){
+  std::string a("lorem|ipsum|sit|consecutar");
+  std::vector&lt;std::string&gt; b;
+  boost::split(
+    b,
+    a,
+    boost::is_any_of("|")
+  );
+  for(auto c:b){
+    std::cout&lt;&lt;c&lt;&lt;std::endl;
+  }
+  return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

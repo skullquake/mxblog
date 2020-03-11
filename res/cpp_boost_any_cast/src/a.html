@@ -1,0 +1,27 @@
+<p><code>boost::any</code> is used to store any type of value in a variable
+many scripting languages like javascript provides a type capable of storing any data type supported by the language
+with <code>boost::any</code> any type of value can be assigned to
+a variable by just making its datatype boost::any</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;boost/any.hpp&gt;
+int main(int argc,char** argv){
+  boost::any a;
+  a=0;
+  std::cout&lt;&lt;boost::any_cast&lt;int&gt;(a)&lt;&lt;std::endl;
+  a=(double)0.1;
+  std::cout&lt;&lt;boost::any_cast&lt;double&gt;(a)&lt;&lt;std::endl;
+  a=(float)0.2;
+  std::cout&lt;&lt;boost::any_cast&lt;float&gt;(a)&lt;&lt;std::endl;
+  a=(char)'a';
+  std::cout&lt;&lt;boost::any_cast&lt;char&gt;(a)&lt;&lt;std::endl;
+  a=std::string("lorem");
+  std::cout&lt;&lt;boost::any_cast&lt;std::string&gt;(a)&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p><code>boost::any_cast</code> is provided
+to explicitly cast <code>boost::any</code> to 
+a desired type</p>
+<script>
+	Prism.highlightAll()
+</script>
+

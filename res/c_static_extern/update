@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/bash
 URL="http://localhost:8082/wordpress/wp_posts/post" 
 URL="https://inovosandbox-sandbox.mxapps.io/wordpress/wp_posts/post"
 DATA=@./src/a.html
@@ -19,6 +19,7 @@ dos2unix ./_headers
 #--------------------------------------------------------------------------------
 $CURL \
 	$URL \
+	--insecure \
 	-H @_headers \
 	--data-binary $DATA >./response
 cat ./response
