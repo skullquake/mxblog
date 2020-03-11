@@ -1,0 +1,70 @@
+<p>Let's take a look at <code>Boost.Algorithm</code> This includes algorithms for sorting, partitioning, searching, and many other things.</p>
+<h3>spreadsort</h3>
+<p><code>boost::sort::spreadsort::spreadsort</code> performs a <i>radix-sort</i> on a container. <i>Radix-sort</i> is faster than <i>comparison-sort</i> on larger collections.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;boost/sort/spreadsort/spreadsort.hpp&gt;
+int main(int argc,char** argv){
+  std::vector&lt;double&gt; a={
+    1.1,
+    5.5,
+    -2.2,
+    3.3,
+    -7.7
+  };
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }std::cout&lt;&lt;std::endl;
+  boost::sort::spreadsort::spreadsort(begin(a), end(a));
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p><i>Radix-sort</i> starts by partitioning 
+the collection by MSD (<i>most significant
+digit</i>) recursively, with the predicate 
+that <code>MSD==0</code> until the <i>bucket
+size</i> is <code>1</code> for the whole
+collection.</p>
+<p>Some of the <code>boost</code> libraries
+requires you linking to libraries, and some are header only. The above is a header only library, so you don't need to link agains any
+special libraries</p>
+<h3>sort_subrange</h3>
+<p>Given <code>4</code> iterators, <code>boost::sort_subrange</code> 
+sorts a collection in the specified subrange</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;vector&gt;
+#include&lt;boost/algorithm/sort_subrange.hpp&gt;
+int main(int argc,char** argv){
+  std::vector&lt;int&gt; a={1,4,2,3,5,8,6,7};
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }std::cout&lt;&lt;std::endl;
+  boost::algorithm::sort_subrange(
+    std::begin(a),
+    std::end(a),
+    std::begin(a),
+    std::begin(a)+4
+  );
+  for(auto b:a){
+    std::cout&lt;&lt;b&lt;&lt;" ";
+  }std::cout&lt;&lt;std::endl;
+  return 0;
+}</code></pre>
+<p><code>boost::algorithm::sort_subrange</code> uses
+<code>operator&lt;</code> to do a comparitive
+sort on the collection, so if the operator
+is implemented on the types held in the container,
+this sort of sort will work. <code>boost::algorithm::sort_subrange</code>
+also supports another comparison predicte so you can
+define something other than <code>operator&lt;</code>
+if you want</p>
+<h3>is_partitioned_until</h3>
+<p><code>boost::algorithm::is_partitioned_until</code> tests
+to see if a sequence is partitioned according to some predicate.
+All items satisfying the predicate are at the beginning of the sequence.</p>
+<pre><code class="language-javascript"></code></pre>
+<script>
+	Prism.highlightAll()
+</script>
