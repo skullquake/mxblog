@@ -1,4 +1,5 @@
 <p>Let's take a look at <code><a href="https://github.com/SRombauts/SQLiteCpp">SRombauts/SQLiteCPP</a></code></p>
+<h3>Compilation</h3>
 <pre><code class="language-javascript">git clone https://github.com/SRombauts/SQLiteCpp
 cd ./SQLiteCpp
 mkdir ./build
@@ -30,7 +31,9 @@ run:
 	$(BIN)
 clean:
 	rm $(BIN)</code></pre>
-<p>Alternatively you can simply copy sources and headers from <code>SQLiteCpp/src</code> and <code>SQLiteCpp/include</code> to your project source tree and compile it in. Here is a simple application</p>
+<p>Alternatively you can simply copy sources and headers from <code>SQLiteCpp/src</code> and <code>SQLiteCpp/include</code> to your project source tree and compile it in.</p>
+<h3>Example</h3>
+<p>Here is a simple application</p>
 <pre><code class="language-javascript">#include&lt;iostream&gt;
 #include&lt;string&gt;
 #include&lt;SQLiteCpp/SQLiteCpp.h&gt;
@@ -38,46 +41,32 @@ clean:
 int main(int argc,char** argv){
   SQLite::Database db("./db/a.db",SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE);
   std::cout&lt;&lt;"Opened "&lt;&lt;db.getFilename()&lt;&lt;std::endl;
-  std::cout&lt;&lt;"Creating table...";
   try{
     {
+      std::cout&lt;&lt;"Dropping Table"&lt;&lt;std::endl;
       SQLite::Transaction txn(db);
       db.exec(R"(DROP TABLE IF EXISTS A)");
       db.exec(R"(DROP TABLE IF EXISTS B)");
       txn.commit();
     }
     {
+      std::cout&lt;&lt;"Creating Table"&lt;&lt;std::endl;
       SQLite::Transaction txn(db);
       db.exec(R"(
         CREATE TABLE A
         (
           id    INTEGER NOT NULL PRIMARY KEY,
-          val    TEXT,
-          b_id    INTEGER,
-          FOREIGN KEY  (b_id) REFERENCES B(id)
+          val    TEXT
         ))");
       txn.commit();
     }
     {
+      std::cout&lt;&lt;"Populating"&lt;&lt;std::endl;
       SQLite::Transaction txn(db);
-      db.exec(R"(
-        CREATE TABLE B
-        (
-          id    INTEGER NOT NULL PRIMARY KEY,
-          val    TEXT,
-          a_id    INTEGER,
-          FOREIGN KEY  (a_id) REFERENCES A(id)
-        ))");
-      txn.commit();
-    }
-    {
-      SQLite::Transaction txn(db);
-      int na=2;
+      int na=8;
       int aid=0;
-      int bid=0;
       for(int i=0;i&lt;na;i++){
         {
-          std::cout&lt;&lt;"Creating A"&lt;&lt;std::to_string(i)&lt;&lt;"...";
           SQLite::Statement stmt(
             db,
             R"(
@@ -96,74 +85,14 @@ int main(int argc,char** argv){
           stmt.bind( 1,aid);
           stmt.bind( 2,std::string("A")+std::to_string(aid));
           stmt.exec();
-          std::cout&lt;&lt;"done"&lt;&lt;std::endl;
         }
-        {
-          std::cout&lt;&lt;"Creating B"&lt;&lt;std::to_string(i)&lt;&lt;"...";
-          SQLite::Statement stmt(
-            db,
-            R"(
-              INSERT INTO B
-              (
-                id,
-                val
-              )
-              VALUES
-              (
-                ?,
-                ?
-              )
-            )"
-          );
-          stmt.bind( 1,bid);
-          stmt.bind( 2,std::string("B")+std::to_string(bid));
-          stmt.exec();
-          std::cout&lt;&lt;"done"&lt;&lt;std::endl;
-        }
-        {
-          std::cout&lt;&lt;"UPDATING A"&lt;&lt;std::to_string(i)&lt;&lt;"...";
-          SQLite::Statement stmt(
-            db,
-            R"(
-              UPDATE A
-              SET
-                b_id=?
-              WHERE
-                id=?
-            )"
-          );
-          stmt.bind( 1,bid);
-          stmt.bind( 2,aid);
-          stmt.exec();
-          std::cout&lt;&lt;"done"&lt;&lt;std::endl;
-        }
-        {
-          std::cout&lt;&lt;"UPDATING B"&lt;&lt;std::to_string(i)&lt;&lt;"...";
-          SQLite::Statement stmt(
-            db,
-            R"(
-              UPDATE B
-              SET
-                a_id=?
-              WHERE
-                id=?
-            )"
-          );
-          stmt.bind( 1,aid);
-          stmt.bind( 2,bid);
-          stmt.exec();
-          std::cout&lt;&lt;"done"&lt;&lt;std::endl;
-        }
-
         aid++;
-        bid++;
-
-
       }
       txn.commit();
     }
     {
-      SQLite::Statement q0(
+      std::cout&lt;&lt;"Selecting"&lt;&lt;std::endl;
+      SQLite::Statement q(
         db,
         R"(
           SELECT 
@@ -172,70 +101,12 @@ int main(int argc,char** argv){
         )"
         
       );
-      while(q0.executeStep()){
-        std::cout&lt;&lt;"(";
-        for(int colidx=0;colidx&lt;q0.getColumnCount();colidx++){
-           std::cout&lt;&lt;q0.getColumn(colidx)&lt;&lt;",";
+      while(q.executeStep()){
+        for(int colidx=0;colidx&lt;q.getColumnCount();colidx++){
+           std::cout&lt;&lt;q.getColumn(colidx)&lt;&lt;" ";
         }
-        std::cout&lt;&lt;")"&lt;&lt;std::endl;
-        SQLite::Statement q1(
-          db,
-          R"(
-            SELECT 
-            *
-            FROM B
-            WHERE
-              id=?
-          )"
-          
-        );
-        q1.bind( 1,q0.getColumn("id").getInt());
-        while(q1.executeStep()){
-          std::cout&lt;&lt;"\t(";
-          for(int colidx=0;colidx&lt;q1.getColumnCount();colidx++){
-             std::cout&lt;&lt;q1.getColumn(colidx)&lt;&lt;",";
-          }
-          std::cout&lt;&lt;")"&lt;&lt;std::endl;
-        }
-        std::cout&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
-      }
-    }
-    {
-      SQLite::Statement q0(
-        db,
-        R"(
-          SELECT 
-          *
-          FROM B
-        )"
-        
-      );
-      while(q0.executeStep()){
-        std::cout&lt;&lt;"(";
-        for(int colidx=0;colidx&lt;q0.getColumnCount();colidx++){
-           std::cout&lt;&lt;q0.getColumn(colidx)&lt;&lt;",";
-        }
-        std::cout&lt;&lt;")"&lt;&lt;std::endl;
-        SQLite::Statement q1(
-          db,
-          R"(
-            SELECT 
-            *
-            FROM A
-            WHERE
-              id=?
-          )"
-          
-        );
-        q1.bind( 1,q0.getColumn("id").getInt());
-        while(q1.executeStep()){
-          std::cout&lt;&lt;"\t(";
-          for(int colidx=0;colidx&lt;q1.getColumnCount();colidx++){
-             std::cout&lt;&lt;q1.getColumn(colidx)&lt;&lt;",";
-          }
-          std::cout&lt;&lt;")"&lt;&lt;std::endl;
-        }
-        std::cout&lt;&lt;"----------------------------------------"&lt;&lt;std::endl;
+        //std::cout&lt;&lt;(int)q.getColumn(0).getInt()&lt;&lt;",";
+        std::cout&lt;&lt;std::endl;
       }
     }
     std::cout&lt;&lt;"done."&lt;&lt;std::endl;
@@ -246,27 +117,93 @@ int main(int argc,char** argv){
 }</code></pre>
 <p>Sample output is as follows</p>
 <pre><code class="language-javascript">Opened ./db/a.db
-Creating table...Creating A0...done
-Creating B0...done
-UPDATING A0...done
-UPDATING B0...done
-Creating A1...done
-Creating B1...done
-UPDATING A1...done
-UPDATING B1...done
-(0,A0,0,)
-        (0,B0,0,)
-----------------------------------------
-(1,A1,1,)
-        (1,B1,1,)
-----------------------------------------
-(0,B0,0,)
-        (0,A0,0,)
-----------------------------------------
-(1,B1,1,)
-        (1,A1,1,)
-----------------------------------------
+Dropping Table
+Creating Table
+Populating
+Selecting
+0 A0 
+1 A1 
+2 A2 
+3 A3 
+4 A4 
+5 A5 
+6 A6 
+7 A7 
 done.</code></pre>
+<h3>Classes</h3>
+<p><code>SQLite::Database</code> is responsible for the management of an <code>SQLite</code> database connection. It uses <code>sqlite3_open_v2()</code> to open the database. The constructor is as follows</p>
+<pre><code class="language-javascript">SQLite::Database(
+	const char* apFilename,
+	const int aFlags	= SQLite::OPEN_READONLY,
+	const int aBusyTimeoutMs= 0,
+	const char apVfs	= nullptr
+)</code></pre>
+<p>By default the database is opened in <code>SQLite::OPEN_READONLY</code> mode. <code>aFlags</code> options include</p>
+<ul>
+	<li><code>SQLite::OPEN_READONLY</code>: Database is opened for reading and writing if possible, or reading only if the file is write protected</li>
+	<li><code>SQLite::OPEN_READWRITE</code>: Database is opened for reading and writing, and is created if it does not alreayd exist</li>
+	<li><code>SQLite::OPEN_CREATE</code>: Database will be created</li>
+	<li><code>SQLite::OPEN_URI</code>: Enable URI filename interpretation, e.g. <code>file:data.db?mode=ro&amp;cache=private</code></li>
+</ul>
+<p>The destructor, <code>SQLite::~Database()</code>, expects all <code>SQLite</code> statements to have been finalized before it is called</p>
+<p>An <code>SQLite</code> table may be temporarily locked, and the <i>busy timeout</i> can be set. A <i>busy handler</i> will sleep for some configured amount of time if a lock is detected. <code>SQLite::Database::setBusyTimeout()</code> may be used to manipulate the timeout value and it can also be set in the constructor for <code>SQLite::Database</code>. This is especially useful in multithreaded programs.</p>
+<p><code>SQLite::Database::exec()</code> can be used to execute a single or multiple
+statements without results. This is usefule for the following types of commands</p>
+<ul>
+	<li><code>DML</code>: <code>INSERT</code>, <code>UPDATE</code> and <code>DELETE</code></li>
+	<li><code>DDL</code>: <code>CREATE</code>, <code>ALTER</code> and <code>DROP</code></li>
+	<li><code>DCL</code>: <code>GRANT</code>, <code>REVOKE</code>, <code>COMMIT</code> and <code>ROLLBACK</code></li>
+	<li><code></code>:</li>
+</ul>
+<p>In order to use precompiled (<i>prepared</i>) statements, use <code>SQLite::Statement::exec()</code></p>
+<p><code>SQLite::Database::exec()</code> takes a <code>const char*</code> or <code>std::string</code>
+parameter that  is the statement and returns <code>int</code>, the number of rows affected</p>
+<p>Often times you will want to execute a statement and return a value, for example</p>
+<pre><code class="language-javascript">INSERT INTO foo(val)
+VALUES('test')
+RETURNING foo_id AS id</code></pre>
+<p>Here <code>foo_id</code> might be <code>SERIAL</code> (<i>autonumber</i>) and we want
+to return its value upon inserting an entity into the relation <code>foo</code>. To do this
+you can use <code>SQLite::Database::execAndGet</code>, which will return <code>SQLite::Column</code>
+that you can then use to get at the value</p>
+<p>To test if a table exists you can use <code>SQLite::Database::tableExists</code>.</p>
+<p>Often times you'll want to perform an <code>INSERT</code> operation and then you need
+to get the <code>INTEGER PRIMARY KEY</code> of that last inserted row. For this you can use
+<code>SQLite::Database::getLastInsertRowid()</code>, which returns <code>long long</code>.
+Coincidentally, each entry in an <code>SQLite</code> table always has a unique
+64-bit signed integer key called <code>rowid</code>, unless you created a
+<code>INTEGER PRIMARY KEY</code> field, in which case it will use that.</p>
+<p>As you manipulate the database in the program you might be interested in finding
+out how many rows have been affected since the connection has been established, and for
+this you can use <code>SQLite::Database::getTotalChanges()</code></p>
+<p><code>SQLite::Database</code> has a couple of other methods, like <code>getHandle()</code>
+to get a handle on the <code>c</code> struct for the database connection, <code>createFunction()</code>
+for creating functions, and <code>backup()</code> for backing up the database</p>
+<p><code>SQLite::Transaction</code> ensures <i>atomicity</i> by grouping multiple SQL statements into an
+atomic secured operation. All the grouped statments needs to succeed and if a single
+one fails, all the changes are rolled back to the initial state. A transaction is
+comitted using <code>SQLite::Transaction::commit()</code></p>
+<p>Next, lets look at <code>SQLite::Statement</code>, which provides a perpared
+SQLite statement. Parameters can be bound using <code>SQLite::Statement::bind()</code>,
+which takes the <i>index</i> and <i>value</i> as parameters. In the SQL query,
+parameters can be <i>unnamed</i> or <i>named</i>. <i>Unnamed</i> parameters
+are indicated with <code>?</code>, and <i>named</i> parameters are indicated with
+<code>?NNN</code>, <code>:VVV</code>, <code>@VVV</code> or <code>$VVV</code>.
+<code>SQLite::Statement::reset()</code> and <code>SQLite::Statement::tryReset()</code>
+resets the statement, making it ready for a new transaction. Bindings can be
+cleared using <code>SQLite::Statement::clearBindings()</code>.</p>
+<p><code>SQLite::Statement::exec()</code> can be used to execute the prepared
+statement where no result is expected. <code>SQLITE::Statement::execStep()</code>
+is used where a result is expected. It will return <code>true</code> when
+a row is ready. You can use <code>getColumn()</code> to get it, either
+by <i>index</i> or by <i>column name</i>. You can use
+<code>SQLite::Statement::getColumns()</code> to get all the columns. To
+test if a columns is <code>NULL</code> you can use <code>SQLite::Statement::isColumnNull()</code>.
+Column names can get obtained using <code>SQLite::Statement::getColumnName()</code>
+which takes a <code>const int</code> parameter, and to get the column
+index if you have the name, use <code>SQLite::Statment::getColumnIndex()</code>
+which takes <code>const char*</code>. You can get the column count
+using <code>SQLite::Statement::getColumnCount()</code>.</p>
 <script>
 	Prism.highlightAll()
 </script>
