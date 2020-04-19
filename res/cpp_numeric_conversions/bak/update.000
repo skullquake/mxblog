@@ -1,28 +1,22 @@
-#!/bin/bash
+#!/usr/bin/bash
 URL="http://localhost:8082/wordpress/wp_posts/post" 
-URL="https://inovosandbox-sandbox.mxapps.io/wordpress/wp_posts/post"
 DATA=@./src/a.html
 CURL=/usr/bin/curl
 #--------------------------------------------------------------------------------
 #build temp headers including the id from response
 #--------------------------------------------------------------------------------
-rm ./_headers
-cat ./response|jq -r ".id"|while read ID;do
-	printf "id: %s\n" $ID|unix2dos>_headers
+printf "id: ">./_headers
+cat ./response|jq -r ".id" >> _headers
+cat ./headers|while read LINE;do
+	echo $LINE >> ./_headers
 done
-cat ./headers|unix2dos|while read LINE;do
-	echo $LINE |unix2dos>> ./_headers
-done
-dos2unix ./_headers
 #--------------------------------------------------------------------------------
 #call
 #--------------------------------------------------------------------------------
 $CURL \
 	$URL \
-	--insecure \
 	-H @_headers \
-	--data-binary $DATA >./response
-cat ./response
+	--data $DATA 
 #--------------------------------------------------------------------------------
 #remove temp headers
 #--------------------------------------------------------------------------------

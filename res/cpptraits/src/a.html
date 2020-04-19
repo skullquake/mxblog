@@ -1,0 +1,26 @@
+<p><code>c++</code> type traits provide a way of providing behavior based on the type specifics. For example, based on if an argument to a template
+function is a pointer or non-pointer type.</p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+#include&lt;type_traits&gt;
+int main(int argc,char** argv){
+	{
+		int*a;
+		if(std::is_pointer&lt;decltype(a)&gt;()){
+			std::cout&lt;&lt;"Pointer"&lt;&lt;std::endl;
+		}else{
+			std::cout&lt;&lt;"Not Pointer"&lt;&lt;std::endl;
+		}
+	}
+	{
+		int a;
+		if(std::is_integral&lt;decltype(a)&gt;()){
+			std::cout&lt;&lt;"Is Integral"&lt;&lt;std::endl;
+		}else{
+			std::cout&lt;&lt;"Is not Integral"&lt;&lt;std::endl;
+		}
+	}
+	return 0;
+}</code></pre>
+<script>
+	Prism.highlightAll()
+</script>

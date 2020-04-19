@@ -1,0 +1,213 @@
+<p>It is sometimes useful to detect page changes and act accordingly. The idea is that the page is changed in the front-end (html/js) and this
+then triggers some code. This is currently used in the <i>Google Tag Manager</i> widget, but let's look at creating a general purpose page change
+widget that will execute static/dynamic server or client activity.</p>
+<p>First, page changes may take place as follows:</p>
+<ul>
+	<li><i>popup</i>: A popup is invoked</li>
+	<li><i>in-content</i>: Then entire page content is replaced</li>
+</ul>
+<p>Depending on the <code>Mendix</code> client version running (<code>mx.version</code>) this can take place a couple of ways. Here we'll stick to +-<code>7.16.0</code></p>
+<p>In order to trigger on page navigations (for <i>in-content</i> page changes), the following serves as illustration</p>
+<pre><code class="language-javascript">this.connect(
+	this.mxform,
+	"onNavigation",
+	function(){
+		//...
+	}
+);</code></pre>
+<p>The above is what you'll use if you choose to write a widget, in other words we are connecting the widget to the <code>this.mxform</code> (which is the content
+form to which it was added as a child) to listen to <code>"onNavigation"</code>, and this will trigger the callback function when that event occurs. When the widget
+gets destroyed you the callback function should automatically get disconnected, which is the primary benefit in the case of widgets.</p>
+<p>Alternatively you can connect a callback function outside the context of a widget as follows</p>
+<pre><code class="language-javascript">dojo.connect(mx.ui.getContentForm(),"onNavigation",function(){
+	//...
+});</code></pre>
+<p>Let's look at managing the connections</p>
+<pre><code class="language-javascript">function foo(){
+	console.log("FOO");
+};
+var hdl=dojo.connect(
+	mx.ui.getContentForm(),
+	"onNavigation",
+	foo
+);
+//...
+dojo.disconnect(hdl);</code></pre>
+<p>Here we set up <code>foo</code> to execute on <code>"onNavigation</code> of the content form, connect it using <code>dojo.connect</code>, storing the 
+return in variable (this will act as a handle), and then use <code>dojo.disconnect</code> to disconnect the handle. You can test this out by running the first
+two statements, doing some page navigations while inspecting the browser console, and then executing the <code>dojo.disconnect</code> statement, verifying
+ disconnection by performing some more page navigations while inspecting the browser console.</p>
+<p>Here are some useful functions for getting at the page data</p>
+<ul>
+	<li><code>getTitle</code>: Function returning the title of the page</li>
+	<li><code>title</code>: Attrirbute representing the title of the page</li>
+	<li><code>path</code>: Attribute representing the path to the page <code>xml</code></li>
+	<li><code>onNavigation</code>: Callback function for page navigation</li>
+	<li><code>place</code>: Attribute representing position of page</li>
+	<li><code>getContext</code>: Function returning the context object (if any)</li>
+	<li><code>domNode</code>: Attribute representing the domnode to which the content form is attached</li>
+	<li><code>getChildren</code>: Function returning the child widgets of the content form (e.g. a scroll container)</li>
+</ul>
+<p>These attributes can be buffered, for example</p>
+<pre><code class="language-javascript">var buf=[];
+function foo(){
+	buf.push({
+		t:new Date().getTime(),
+		p:mx.ui.getContentForm().path,
+		u:mx.session.getUserName()
+	});
+};
+var hdl=dojo.connect(
+	mx.ui.getContentForm(),
+	"onNavigation",
+	foo
+);</code></pre>
+<p>Custom page actions can be implemented as follows</p>
+<pre><code class="language-javascript">function foo(){
+    switch(mx.ui.getContentForm().path){
+      case "Module/pg_000.page.xml":
+          console.log("CUSTOM0");
+      case "Module/pg_001.page.xml":
+          console.log("CUSTOM0");
+      case "Module/pg_002.page.xml":
+          console.log("CUSTOM0");
+      case "Module/pg_003.page.xml":
+          console.log("CUSTOM0");
+      default:
+          break;
+    }
+};
+var hdl=dojo.connect(
+	mx.ui.getContentForm(),
+	"onNavigation",
+	foo
+);</code></pre>
+<p>Alternatively, this rather contrived example passes some content form data to the server for processing on navigation change</p>
+<pre><code class="language-javascript">new Promise(
+	(resolve,reject)=&gt;{
+		mx.data.create({
+			entity:"MxUI.Logger",
+			callback:function(obj) {
+				resolve(obj);
+			},
+			error:function(e) {
+				reject(e);
+			}
+		});
+	}
+).then(
+	function(obj){
+		function foo(){
+			obj.set("path",mx.ui.getContentForm().path);
+			obj.set("time",new Date().getTime());
+			obj.set("user",mx.session.getUserName());
+			mx.ui.action("MxUI.ivk_logPageAccess",{
+				params: {
+					applyto: "selection",
+					guids: [obj.getGuid()]
+				};
+                	});
+        	};
+		var hdl=dojo.connect(mx.ui.getContentForm(),"onNavigation",foo);
+	},
+	function(reject){
+		console.error(reject);
+	},
+);</code></pre>
+<p>The main reason for delving into page change, however, was to dynamically manipulate the preamble in the document <code>title</code>. You can easily
+change the document title using <code>document.title=somestring</code>. In our case the preamble is to come from the database. So this could be implemented using
+<code>"FOO - "+mx.ui.getContentForm().title</code>, and <code>"FOO"</code> would come from the database.</p>
+<pre><code class="language-javascript">//...
+function foo(){
+	try{
+		document.title=
+			this.contextObj.get("Preamble")+
+			" - "+
+			mx.ui.getContentForm().title
+		;
+	catch(e){
+		console.error(e.toString());
+	}
+};
+var hdl=dojo.connect(
+	mx.ui.getContentForm(),
+	"onNavigation",
+	lang.hitch(foo,this)
+);</code></pre>
+<p>Here <code>this.contextObj</code> will be the context object of a widget, or if you implemented this in an <code>HTMLSnippet</code> with context, whatever
+the context object of the <code>HTMLSnippet</code> was</p>
+<h3>General Purpose Widget</h3>
+<p>The above is good enough to get started with a <code>mxpagechange</code> widget, which would include the following</p>
+<ul>
+	<li>Optional global on page static javascript</li>
+	<li>Optional global on page database driven javascript</li>
+	<li>Optional set of page specific static javascript</li>
+	<li>Optional set of page specific database driven javascript</li>
+</ul>
+<p>Two options exists for the database driven javascript</p>
+<ul>
+	<li>Load via associative retrieves</li>
+	<li>Load via microflow</li>
+</ul>
+<p>For the associative retrieves, there also exists the option to load the entire dataset for the dynamic javascript all at the beginning. This way
+the data will only be loaded in the beginning and mitigate the necessity of having to do retrieves on every page change.</p>
+<p>For the dynamic page javascript an interface needs to be created to edit javascript source code associated with each page. Though not necessary,
+it will make it easier if you can populate the database with the names and paths of all the pages. This way you can't make mistakes when setting
+up the paths of the pages (e.g. <code>"Anonymous/pg_login.page.xml"</code>. Unfortunately <code>Mendix</code> does not provide this functionality. Two
+ways of doing this include iterating through the project web directory in <code>/pages</code> and getting the page names, or bypassing the private
+<code>Mendix</code> java API security via reflection and getting the documents there (undocumented!). The following serves as illustration</p>
+<pre><code class="language-javascript">String.prototype.paddingLeft=function(paddingValue){
+  return String(paddingValue+this).slice(-paddingValue.length);
+};
+var ctx=root.getContext();
+var astack=ctx.getActionStack();
+action=astack[0];
+var arr_lang=action.getVariable("arr_Lang");
+var arr_module=action.getVariable("arr_Module");
+var arr_layout=action.getVariable("arr_Layout");
+var arr_page=action.getVariable("arr_Page");
+var path=com.mendix.core.Core.getConfiguration().getPublicWebrootPath()+"/pages";
+var f_lang=new java.io.File(path);
+if(f_lang.isDirectory()){
+var c_lang=f_lang.listFiles();
+  for(var idx_c_lang=0;idx_c_lang&lt;c_lang.length;idx_c_lang++){
+    if(c_lang[idx_c_lang].isDirectory()){
+      var obj_lang=com.mendix.core.Core.retrieveXPathQuery(ctx,"//Project.Lang[Name='"+c_lang[idx_c_lang].getName()+"']")
+      obj_lang.length&gt;0?obj_lang=obj_lang[0]:obj_lang=com.mendix.core.Core.instantiate(ctx,"Project.Lang");
+      obj_lang.setValue(ctx,"Name",c_lang[idx_c_lang].getName())
+      arr_lang.add(obj_lang);
+      var c_c_lang=c_lang[idx_c_lang].listFiles();
+      for(var idx_c_c_lang=0;idx_c_c_lang&lt;c_c_lang.length;idx_c_c_lang++){
+        if(c_c_lang[idx_c_c_lang].isDirectory()){
+        var obj_lang=com.mendix.core.Core.retrieveXPathQuery(ctx,"//Project.Lang[Name='"+c_lang[idx_c_lang].getName()+"']")
+        obj_lang.length&gt;0?obj_lang=obj_lang[0]:obj_lang=com.mendix.core.Core.instantiate(ctx,"Project.Lang");
+          var obj_module=com.mendix.core.Core.instantiate(ctx,"Project.Module");
+          obj_module.setValue(ctx,"Project.Module_Lang",obj_lang.getId());
+          obj_module.setValue(ctx,"Name",c_c_lang[idx_c_c_lang].getName());
+          arr_module.add(obj_module);
+          var c_c_c_lang=c_c_lang[idx_c_c_lang].listFiles();
+          for(var idx_c_c_c_lang=0;idx_c_c_c_lang&lt;c_c_c_lang.length;idx_c_c_c_lang++){
+            if(!c_c_c_lang[idx_c_c_c_lang].isDirectory()){
+              if(c_c_c_lang[idx_c_c_c_lang].getName().endsWith("layout.xml")){
+                var obj_layout=com.mendix.core.Core.instantiate(ctx,"Project.Layout");
+                obj_layout.setValue(ctx,"Project.Layout_Module",obj_module.getId());
+                obj_layout.setValue(ctx,"Name",c_c_c_lang[idx_c_c_c_lang].getName());
+                arr_layout.add(obj_layout);
+              }else if(c_c_c_lang[idx_c_c_c_lang].getName().endsWith("page.xml")){
+                var obj_page=com.mendix.core.Core.instantiate(ctx,"Project.Page");
+                obj_page.setValue(ctx,"Project.Page_Module",obj_module.getId());
+                obj_page.setValue(ctx,"Name",c_c_c_lang[idx_c_c_c_lang].getName())
+                arr_page.add(obj_page);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}</code></pre>
+<p>The above populates and synchronizes tables <code>Lang</code> - <code>Module</code> - <code>Layout</code> - <code>Page</code>.</p>
+<h3>...</h3>
+<script>
+	Prism.highlightAll()
+</script>

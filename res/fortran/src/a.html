@@ -1,0 +1,307 @@
+<!--
+https://annefou.github.io/Fortran/basics/basics.html
+http://www.yolinux.com/TUTORIALS/LinuxTutorialMixingFortranAndC.html
+https://northstar-www.dartmouth.edu/doc/solaris-forte/manuals/fortran/prog_guide/11_cfort.html
+https://craftofcoding.wordpress.com/2018/01/29/interoperability-calling-fortran-from-c-i/
+-->
+
+<p><code>FORTRAN</code> (<i>FORmula TRANslator</i>) was developed in 1954 by <code>IBM</code> led by <i>John W. Backus</i>. Prior to this people had to program
+in assembly language, and <code>FORTRAN</code> is thus and example one of the first compiled high-level languages. <code>FORTRAN</code> is general-purpose, compiled imperative, and specific to numerical computation.</p>
+<p>Various standards exists, including</p>
+<ul>
+	<li><code>FORTRAN</code>: 1954 - John W Backus and his team at IBM begin developing the scientific programming language <code>FORTRAN</code></li>
+	<li><code>FORTRAN II</code>: 1959 - a new version, <code>FORTRAN II</code> is introduced</li>
+	<li><code>FORTRAN III</code>: ????</li>
+	<li><code>IBM 1401 FORTRAN</code>: ????</li>
+	<li><code>FORTRAN IV</code>: 1962 - This version has new features like direct file access and the <code>LOGICAL</code> data type</li>
+	<li><code>FORTRAN 66</code>: ????</li>
+	<li><code>FORTRAN 77</code>: 1978 - Better flow control and test structures</li>
+	<li><code>Minnesota FORTRAN</code>: ????</li>
+	<li><code>Fortran 90</code>: 1992 - A formal ANSI/ISO standard with major revisions making it a modern programming language</li>
+	<li><code>Fortran 95</code>: 1995 - Minor revision of <code>Fortran 90</code></li>
+	<li><code>Fortran 2003</code>: 2004 - Officially published as ISO/IEC 1939-1:2004, a major revision introducing new features.</li>
+	<li><code>Fortran 2008</code>: ???? - Incorporates object-oriented programming support with type extension, inheritance, polymorphism, dynamic type allocation, type-bound procedures and parallel execution</li>
+	<li><code>Fortran 2018</code>: ????</li>
+</ul>
+<p>Numerical libraries include <code>BLAS</code>, <code>LAPACK</code>, <code>LINPACK</code>, <code>EISPACK</code>, <code>MINPACK</code>, <code>ARPACK</code>, <code>IMSL</code>, <code>NAG</code>, etc.</p>
+<h3>Compilation</h3>
+<p>You can compile <code>FORTRAN</code> programs using <code>gfortran</code> or <code>ifort</code>. <code>gfortran</code> is the <code>GNU</code> <code>FORTRAN</code> compiler, including full support for <code>Fortran 95</code> and large parts of
+<code>Fortran 2003</code> and <code>Fortran 2008</code>. It supports <code>OpenMP</code> multi-platform shared memory multiprocessing. Since <code>GCC</code> 4.0 <code>gfortran</code> has replaced the <code>f77</code> compiler and has been rewritten
+as a front-end for <code>gcc</code> and has been migrated to a <code>c++</code> front-end since 2010.</p>
+<p>Install <code>gfortran</code> as follows</p>
+<pre><code class="language-javascript">sudo apt-get install gfortran</code></pre>
+<p>This should get you <code>/usr/bin/f95</code> and <code>/usr/bin/f77</code> and
+<code>/usr/bin/gfortran</code>, which is the main compiler you can use.</p>
+<p>Here is a basic source tree</p>
+<pre><code class="language-javascript">├── bin
+│   └── a.out
+├── makefile
+└── src
+    └── a.f</code></pre>
+<p>You can use the following <code>makefile</code></p>
+<pre><code class="language-javascript">FC=gfortran
+FCFLAGS=-std=f95
+SRC=./src/a.f
+BIN=./bin/a.out
+$(BIN):$(SRC)
+	$(FC)\
+		$(SRC)\
+		-o $(BIN)
+run:$(BIN)
+	$(BIN)
+.phony:clean
+clean:
+	rm $(BIN)</code></pre>
+<p><code>./src/a.f</code> looks as follows</p>
+<pre><code class="language-javascript">       program hello
+          print *, "Hello World!"
+       end program hello</code></pre>
+<p>Valid language switches for <code>gfortran</code> include <code>-std=f96</code>,
+<code>-std=f2003</code> and <code>-std=f2008</code></p>
+<p>As with many of the older languages, <code>FORTRAN</code> expects certain line
+offsets, and in the case of <code>FORTRAN</code> statements start at an offset of 7 characters from the beginning of the line. <code>gfortran</code> luckly will not complain. <code>vim</code> has syntax highlighting for <code>FORTRAN</code>.</p>
+<p>Let's look at seperate compilation and <code>c</code>/<code>c++</code> integration in one go. First the source tree</p>
+<pre><code class="language-javascript">├── c
+│   ├── a.c
+│   └── b.c
+├── cobol
+│   ├── a.cob
+│   └── b.cob
+├── cpp
+│   ├── a.cpp
+│   └── b.cpp
+├── fortran
+│   ├── a.f
+│   └── b.f
+└── main.cpp</code></pre>
+<p>Crickey! What a nice mixture of <code>c</code>, <code>c++</code>, <code>COBOL</code>, and <code>FORTRAN</code>. The main driver is <code>./src/main.cpp</code> in <code>C++</code>. To use <code>FORTRAN</code> with <code>c</code> / <code>c++</code>, you need to install <code>libgfortran3</code> as follows</p>
+<pre><code class="language-javascript">sudo apt-get install libgfortran3</code></pre>
+<p>This should get you <code>usr/lib/x86_64-linux-gnu/libgfortran.so.3[.0.0]</code></p>
+<p>Let's look at the <code>makefile</code></p>
+<pre><code class="language-javascript">OS=$(shell $(CXX) -dumpmachine)
+SOEXT?=so
+BINEXT?=out
+ifeq (,$(findstring mingw,$(OS)))
+SOEXT?=dll
+BINEXT?=exe
+endif
+ifeq (,$(findstring djgpp,$(OS)))
+SOEXT?=dll
+BINEXT?=exe
+endif
+ifeq ($(PREFIX),)
+PREFIX := /usr/local
+endif
+CC=gcc
+CXX=g++
+COBC=cobc
+FC=gfortran
+AR=ar
+BUILDDIR=./bin/build
+BIN=./bin/a.$(BINEXT)
+SRCDIR=src
+SRCC:=$(shell find $(SRCDIR) -name '*.c')
+SRCCXX:=$(shell find $(SRCDIR) -name '*.cpp')
+SRCCOB:=$(shell find $(SRCDIR) -name '*.cob')
+SRCFT:=$(shell find $(SRCDIR) -name '*.f')
+OBJSC:=$(addprefix $(BUILDDIR)/,$(SRCC:%.c=%.o))
+OBJSCXX:=$(addprefix $(BUILDDIR)/,$(SRCCXX:%.cpp=%.o))
+OBJSCOB:=$(addprefix $(BUILDDIR)/,$(SRCCOB:%.cob=%.o))
+OBJSFT:=$(addprefix $(BUILDDIR)/,$(SRCFT:%.f=%.o))
+OBJS:=\
+	$(OBJSC) \
+	$(OBJSCXX) \
+	$(OBJSCOB) \
+	$(OBJSFT)
+CFLAGS+=\
+	`cob-config --cflags`
+CXXFLAGS+=\
+	`cob-config --cflags`
+LDFLAGS+=\
+	`cob-config --libs` \
+	-lgfortran
+all:\
+	$(BIN)
+$(BIN):$(OBJS)
+	@printf "generating $@...\n"
+	@mkdir -p $(@D)
+	$(CXX)\
+		$(OBJS) \
+		$(LDFLAGS) \
+		-o $(BIN)
+$(BUILDDIR)/%.o: %.c
+	@printf "generating $@...\n"
+	@mkdir -p $(@D)
+	$(CC)\
+		$(CFLAGS)\
+		-c $&lt;\
+		$(LDFLAGS)\
+		-o $@
+$(BUILDDIR)/%.o: %.cpp
+	@printf "generating $@...\n"
+	@mkdir -p $(@D)
+	$(CXX)\
+		$(CXXFLAGS)\
+		-c $&lt;\
+		$(LDFLAGS)\
+		-o $@
+$(BUILDDIR)/%.o: %.cob
+	@printf "generating $@...\n"
+	@mkdir -p $(@D)
+	$(COBC)\
+		$&lt; \
+		-c \
+		-static \
+		-o $@
+$(BUILDDIR)/%.o: %.f
+	@printf "generating $@...\n"
+	@mkdir -p $(@D)
+	$(FC)\
+		$&lt; \
+		-c \
+		-o $@
+run:$(BIN)
+	$(BIN)
+.phony:\
+	run\
+	clean\
+	lsvar
+clean:
+	@rm -r ./bin</code></pre>
+<p>Let's take a look at <code>/src/fortran/a.f</code></p>
+<pre><code class="language-javascript">       subroutine fta() bind (C)
+       implicit none
+          print *, "Hello World!"
+       end subroutine fta</code></pre>
+<p>Of course now that we are calling <code>FORTRAN</code> from <code>c</code> / <code>c++</code>, we don't have a <code>program</code> on <code>FORTRAN</code>s side but a <code>subroutine</code>. Additionally, without <code>bind (C)</code> <code>c</code> / <code>c++</code> will not pick up the function with <code>extern void fta(vid);</code> when in the linking phase, so thats important as well.</p>
+<p>As with <code>cobc</code>, you can use either <code>gcc</code>/<code>g++</code> or <code>gfortran</code> when linking all the objects, as they are both frontends for <code>gcc</code>. When using <code>gfortran</code> to link the objects, include <code>-lstdc++</code>, and when using <code>gcc</code>, use <code>-lgfortran</code>.</p>
+<h3>C/C++ - FORTRAN Data Types</h3>
+<p>Before going into calling <code>c</code> from <code>FORTRAN</code> and vice versa, let's take a look at the data type equivalents.</p>
+<table class="table-striped table-sm" style="width:100%">
+	<thead>
+		<tr>
+			<th>FORTRAN</th>
+			<th>C/C++</th>
+		</tr>
+	</thead>
+	<tbody>
+	<tr>
+		<td>byte</td>
+		<td>unsigned char</td>
+	</tr>
+	<tr>
+		<td>integer*2</td>
+		<td>short int</td>
+	</tr>
+	<tr>
+		<td>integer</td>
+		<td>long int or int</td>
+	</tr>
+	<tr>
+		<td>integer iabc(2,3)</td>
+		<td>int iabc[3][2];</td>
+	</tr>
+	<tr>
+		<td>logical</td>
+		<td>long int or int</td>
+	</tr>
+	<tr>
+	<td valign="top">logical*1</td>
+	<td valign="top">bool<br> (C++, One byte)</td>
+	</tr>
+	<tr>
+		<td>real</td>
+		<td>float</td>
+	</tr>
+	<tr>
+	<td>real*8</td>
+	<td>double</td>
+	</tr>
+	<tr>
+		<td>real*16</td>
+		<td>long double</td>
+	</tr>
+	<tr>
+		<td>complex</td>
+		<td>struct{float realnum; float imagnum;}</td>
+	</tr>
+	<tr>
+		<td>double complex</td>
+		<td>struct{double dr; double di;}</td>
+	</tr>
+	<tr>
+		<td>character*6 abc</td>
+		<td>char abc[6];</td>
+	</tr>
+	<tr>
+		<td>character*6 abc(4)</td>
+		<td>char abc[4][6];</td>
+	</tr>
+	<tr>
+		<td>parameter</td>
+		<td>#define <i>PARAMETER</i> <i>value</i></td>
+	</tr>
+	</tbody>
+</table>
+<p>Here is a sample for passing integral and floating point values and arrays from
+<code>c</code> to <code>FORTRAN</code>. First, <code>main.c</code></p>
+<pre><code class="language-javascript">#include&lt;iostream&gt;
+extern "C"{
+void ftparvoid();
+void ftparint(int*);
+void ftparintarr(int*,int*);
+void ftpardouble(double*);
+void ftpardoublearr(double*,int*);
+}
+int main(int argc,char** argv){
+	int _int=1;
+	int _intarr[]={0,1,2,3};
+	double _double=1.23;
+	double _doublearr[]={0,1.2,3.45,6.789};
+	ftparvoid();
+	ftparint(&amp;_int);
+	ftpardouble(&amp;_double);
+	_int=sizeof(_intarr)/sizeof(_intarr[0]);
+	ftparintarr(_intarr,&amp;_int);
+	_int=sizeof(_doublearr)/sizeof(_doublearr[0]);
+	ftpardoublearr(_doublearr,&amp;_int);
+	return 0;
+}</code></pre>
+<p>No headers need to be included or special functions invoked to set up and manage <code>FORTRAN</code> as with <code>COBOL</code>, just reference the <code>extern</code> functions. Here are the <code>FORTRAN</code> sources for the above <code>extern</code>s</p>
+<p>./src/fortran/parvoid.f</p>
+<pre><code class="language-javascript">       subroutine ftparvoid()bind(C)
+       implicit none
+          print *,"ftparvoid"
+       end subroutine ftparvoid</code></pre>
+<p>./src/fortran/parint.f</p>
+<pre><code class="language-javascript">       subroutine ftparint(a)bind(C)
+       implicit none
+       integer::a
+          print *,"ftparint"
+          print *,a
+       end subroutine ftparint</code></pre>
+<p>./src/fortran/pardouble.f</p>
+<pre><code class="language-javascript">       subroutine ftpardouble(a)bind(C)
+       implicit none
+       double precision::a
+          print *,"ftparfloat"
+          print *,a
+       end subroutine ftpardouble</code></pre>
+<p>./src/fortran/parintarr.f</p>
+<pre><code class="language-javascript">       subroutine ftparintarr(a,b)bind(C)
+       implicit none
+       integer::b
+       integer::a(b)
+          print *,"ftparintarr"
+          print *,a
+       end subroutine ftparintarr</code></pre>
+<p>./src/fortran/pardoublearr.f</p>
+<pre><code class="language-javascript">       subroutine ftpardoublearr(a,b)bind(C)
+       implicit none
+       integer::b
+       double precision::a(b)
+          print *,"ftpardoublearr"
+          print *,a
+       end subroutine ftpardoublearr</code></pre>
+<p>Next look at return values.</p>
+<script>Prism.highlightAll();</script>
